@@ -25,6 +25,8 @@ import javax.swing.table.DefaultTableModel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.hiscore.HiscoreClient;
+import net.runelite.client.hiscore.HiscoreSkill;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -64,6 +66,9 @@ class GoalModePanel extends JPanel {
 
 	// Calculation engine for centralized calculation logic
 	private final PrayerCalculationEngine calculationEngine;
+
+	// HiscoreClient for player lookups
+	private HiscoreClient hiscoreClient;
 
 	// Debug panel components (only visible in debug mode)
 	private FoldingSection debugSection;
@@ -431,6 +436,10 @@ class GoalModePanel extends JPanel {
 
 	public void setResourceScanner(BoneResourceScanner scanner) {
 		this.resourceScanner = scanner;
+	}
+
+	public void setHiscoreClient(HiscoreClient hiscoreClient) {
+		this.hiscoreClient = hiscoreClient;
 	}
 
 	private void updateZealotRobesWarning() {
@@ -913,8 +922,7 @@ class GoalModePanel extends JPanel {
 	}
 
 	private void performHiscoreLookup() {
-		// Simplified version of hiscore lookup used in debug mode. Look up player name,
-		// 		fill in player's current level/xp and sets a reasonable goal.
+		// Lookup player name using HiscoreClient and populate current/target fields
 		String username = hiscoreLookupField.getText().trim();
 		if (username.isEmpty()) {
 			return;
@@ -926,6 +934,13 @@ class GoalModePanel extends JPanel {
 			return;
 		}
 
+		// Check if HiscoreClient is available
+		if (hiscoreClient == null) {
+			hiscoreLookupField.setIcon(IconTextField.Icon.ERROR);
+			debugStatusLabel.setText("<html>Error: HiscoreClient not available</html>");
+			return;
+		}
+
 		// Set loading state
 		hiscoreLookupField.setEditable(false);
 		hiscoreLookupField.setIcon(IconTextField.Icon.LOADING_DARKER);
@@ -934,59 +949,40 @@ class GoalModePanel extends JPanel {
 		// Capture username for use in async callback
 		final String finalUsername = username;
 
-		// Perform async lookup using a simple HTTP request
+		// Perform async lookup using RuneLite's HiscoreClient
 		java.util.concurrent.CompletableFuture.supplyAsync(() -> {
 			try {
-				// Simple HTTP request to RuneScape hiscores API
-				String url = "https://secure.runescape.com/m=hiscore_oldschool/index_lite.ws?player=" +
-						java.net.URLEncoder.encode(finalUsername, "UTF-8");
-
-				java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new java.net.URL(url)
-						.openConnection();
-				connection.setRequestMethod("GET");
-				connection.setConnectTimeout(5000);
-				connection.setReadTimeout(5000);
-
-				if (connection.getResponseCode() == 200) {
-					try (java.io.BufferedReader reader = new java.io.BufferedReader(
-							new java.io.InputStreamReader(connection.getInputStream()))) {
-
-						String line;
-						int skillIndex = 0;
-						while ((line = reader.readLine()) != null && skillIndex <= 6) { // Prayer is index 6
-							if (skillIndex == 6) { // Prayer skill
-								String[] parts = line.split(",");
-								if (parts.length >= 3) {
-									return Long.parseLong(parts[2]); // XP is the third value
-								}
-							}
-							skillIndex++;
-						}
-					}
-				}
-				return -1L; // Error case
+				return hiscoreClient.lookup(finalUsername);
 			} catch (Exception e) {
-				log.error("Error fetching hiscore data", e);
-				return -1L;
+				log.error("Error fetching hiscore data for player: " + finalUsername, e);
+				return null;
 			}
-		}).whenCompleteAsync((prayerXP, ex) -> javax.swing.SwingUtilities.invokeLater(() -> {
+		}).whenCompleteAsync((hiscoreResult, ex) -> javax.swing.SwingUtilities.invokeLater(() -> {
 			// Reset field state
 			hiscoreLookupField.setEditable(true);
 
-			if (prayerXP == null || prayerXP == -1L || ex != null) {
+			if (hiscoreResult == null || ex != null) {
 				hiscoreLookupField.setIcon(IconTextField.Icon.ERROR);
-				debugStatusLabel.setText("<html></html>"); // Clear status on error
+				debugStatusLabel.setText("<html>Player not found or hiscores unavailable</html>");
 				return;
 			}
 
-			// Success - populate the current XP field
+			// Success - extract Prayer skill data
 			hiscoreLookupField.setIcon(IconTextField.Icon.SEARCH);
 			try {
+				// Get Prayer skill from hiscore result
+				net.runelite.client.hiscore.Skill prayerSkill = hiscoreResult.getSkill(HiscoreSkill.PRAYER);
+				if (prayerSkill == null) {
+					hiscoreLookupField.setIcon(IconTextField.Icon.ERROR);
+					debugStatusLabel.setText("<html>Prayer data not available for this player</html>");
+					return;
+				}
+
+				long prayerXP = prayerSkill.getExperience();
 				int prayerXPInt = (int) Math.min(prayerXP, Integer.MAX_VALUE);
 				int prayerLevel = net.runelite.api.Experience.getLevelForXp(prayerXPInt);
 
-				// Calculate target: next level for most players, or 200M XP for high-level
-				// players
+				// Calculate target: next level for most players, or 200M XP for high-level players
 				int targetLevel;
 				int targetXP;
 
@@ -1019,6 +1015,7 @@ class GoalModePanel extends JPanel {
 			} catch (Exception e) {
 				log.error("Error processing hiscore result", e);
 				hiscoreLookupField.setIcon(IconTextField.Icon.ERROR);
+				debugStatusLabel.setText("<html>Error processing player data</html>");
 			}
 		}));
 	}
