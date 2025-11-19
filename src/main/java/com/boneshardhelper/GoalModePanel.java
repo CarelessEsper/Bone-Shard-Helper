@@ -23,6 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -31,6 +32,7 @@ import net.runelite.client.ui.components.FlatTextField;
 import net.runelite.client.ui.components.IconTextField;
 
 @Getter
+@Slf4j
 class GoalModePanel extends JPanel {
 	private static final Pattern NON_NUMERIC = Pattern.compile("\\D");
 
@@ -269,7 +271,7 @@ class GoalModePanel extends JPanel {
 			updateResourcesDisplay(result, prayerData.isUseSunfireWine(), prayerData.isUseZealotRobes(), false);
 
 		} catch (Exception e) {
-			System.err.println("Prayer Calculator: Error updating bone shards calculation - " + e.getMessage());
+			log.error("Prayer Calculator: Error updating bone shards calculation", e);
 
 			// Create empty result for error display
 			CalculationResult errorResult = new CalculationResult();
@@ -312,7 +314,7 @@ class GoalModePanel extends JPanel {
 					// Use blessed bone shards item ID for the icon
 					itemManager.getImage(29381).addTo(boneShardsLabel);
 				} catch (Exception e) {
-					System.err.println("Error loading bone shard icon: " + e.getMessage());
+					log.error("Error loading bone shard icon", e);
 				}
 			}
 
@@ -335,7 +337,7 @@ class GoalModePanel extends JPanel {
 					int wineItemId = useSunfireWine ? 29384 : 1993;
 					itemManager.getImage(wineItemId).addTo(wineLabel);
 				} catch (Exception e) {
-					System.err.println("Error loading wine icon: " + e.getMessage());
+					log.error("Error loading wine icon", e);
 				}
 			}
 
@@ -355,7 +357,7 @@ class GoalModePanel extends JPanel {
 			updateZealotRobesWarning();
 
 		} catch (Exception e) {
-			System.err.println("Prayer Calculator: Error updating resources display - " + e.getMessage());
+			log.error("Prayer Calculator: Error updating resources display", e);
 			boneShardsLabel.setText("Error loading display");
 			wineLabel.setText("Error loading display");
 		}
@@ -406,7 +408,7 @@ class GoalModePanel extends JPanel {
 				boneShardsLabel.setIcon(null);
 				itemManager.getImage(29381).addTo(boneShardsLabel);
 			} catch (Exception e) {
-				System.err.println("Error refreshing bone shard icon: " + e.getMessage());
+				log.error("Error refreshing bone shard icon", e);
 			}
 		}
 
@@ -422,7 +424,7 @@ class GoalModePanel extends JPanel {
 				wineLabel.setIcon(null);
 				itemManager.getImage(wineItemId).addTo(wineLabel);
 			} catch (Exception e) {
-				System.err.println("Error refreshing wine icon: " + e.getMessage());
+				log.error("Error refreshing wine icon", e);
 			}
 		}
 	}
@@ -964,7 +966,7 @@ class GoalModePanel extends JPanel {
 				}
 				return -1L; // Error case
 			} catch (Exception e) {
-				System.err.println("Error fetching hiscore data: " + e.getMessage());
+				log.error("Error fetching hiscore data", e);
 				return -1L;
 			}
 		}).whenCompleteAsync((prayerXP, ex) -> javax.swing.SwingUtilities.invokeLater(() -> {
@@ -1015,7 +1017,7 @@ class GoalModePanel extends JPanel {
 								+ "\"</html>");
 
 			} catch (Exception e) {
-				System.err.println("Error processing hiscore result: " + e.getMessage());
+				log.error("Error processing hiscore result", e);
 				hiscoreLookupField.setIcon(IconTextField.Icon.ERROR);
 			}
 		}));

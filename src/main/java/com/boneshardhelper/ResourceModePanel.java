@@ -17,11 +17,13 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.components.FlatTextField;
 
 @Getter
+@Slf4j
 class ResourceModePanel extends JPanel {
 	private static final Pattern NON_NUMERIC = Pattern.compile("\\D");
 
@@ -642,7 +644,7 @@ class ResourceModePanel extends JPanel {
 
 				} catch (Exception e) {
 					// Skip this entry and continue with others
-					System.err.println("Prayer Calculator: Error processing bone entry - " + e.getMessage());
+					log.error("Prayer Calculator: Error processing bone entry", e);
 				}
 			}
 
@@ -671,7 +673,7 @@ class ResourceModePanel extends JPanel {
 			}
 
 		} catch (Exception e) {
-			System.err.println("Prayer Calculator: Error updating resource breakdown - " + e.getMessage());
+			log.error("Prayer Calculator: Error updating resource breakdown", e);
 			updateDebugError("Error updating resource breakdown: " + e.getMessage());
 			totalShardsLabel.setText("Calculation error");
 		}
@@ -751,7 +753,7 @@ class ResourceModePanel extends JPanel {
 					totalWineLabel.setIcon(null);
 					itemManager.getImage(wineItemId).addTo(totalWineLabel);
 				} catch (Exception e) {
-					System.err.println("Error loading wine icon: " + e.getMessage());
+					log.error("Error loading wine icon", e);
 				}
 			}
 
@@ -773,7 +775,7 @@ class ResourceModePanel extends JPanel {
 			updateZealotRobesWarning();
 
 		} catch (Exception e) {
-			System.err.println("Prayer Calculator: Error updating achievable level - " + e.getMessage());
+			log.error("Prayer Calculator: Error updating achievable level", e);
 			updateDebugError("Calculation error: " + e.getMessage());
 			totalXPValueLabel.setText("Calculation error");
 			achievableLevelLabel.setText("Calculation error");
@@ -879,7 +881,7 @@ class ResourceModePanel extends JPanel {
 			updateTotalShardsLabel();
 
 		} catch (Exception e) {
-			System.err.println("Prayer Calculator: Error recalculating with current settings - " + e.getMessage());
+			log.error("Prayer Calculator: Error recalculating with current settings", e);
 			updateDebugError("Error recalculating: " + e.getMessage());
 		}
 	}
@@ -920,7 +922,7 @@ class ResourceModePanel extends JPanel {
 				achievableLevelLabel.setIcon(new javax.swing.ImageIcon(prayerIcon));
 			}
 		} catch (Exception e) {
-			System.err.println("Error loading static icons: " + e.getMessage());
+			log.error("Error loading static icons", e);
 		}
 	}
 
@@ -1200,7 +1202,7 @@ class ResourceModePanel extends JPanel {
 						loadScaledIcon(itemId);
 					}
 				} catch (Exception e) {
-					System.err.println("Error loading icon for " + boneType.getDisplayName() + ": " + e.getMessage());
+					log.error("Error loading icon for {}", boneType.getDisplayName(), e);
 					setIcon(null);
 				}
 			} else {
@@ -1219,7 +1221,7 @@ class ResourceModePanel extends JPanel {
 				// Scale the icon after it's loaded
 				scaleIconToMaxSize(MAX_ICON_SIZE);
 			} catch (Exception e) {
-				System.err.println("Error loading icon for item " + itemId + ": " + e.getMessage());
+				log.error("Error loading icon for item {}", itemId, e);
 				setIcon(null);
 			}
 		}
@@ -1256,7 +1258,7 @@ class ResourceModePanel extends JPanel {
 					setIcon(new javax.swing.ImageIcon(scaledImage));
 				}
 			} catch (Exception e) {
-				System.err.println("Error scaling icon: " + e.getMessage());
+				log.error("Error scaling icon", e);
 			}
 		}
 
@@ -1300,7 +1302,7 @@ class ResourceModePanel extends JPanel {
 						}
 					}
 				} catch (Exception e) {
-					System.err.println("Error loading icon for " + boneTypeName + ": " + e.getMessage());
+					log.error("Error loading icon for {}", boneTypeName, e);
 					setIcon(null);
 				}
 			} else {
@@ -1328,7 +1330,7 @@ class ResourceModePanel extends JPanel {
 				// Scale the icon after it's loaded
 				scaleIconToMaxSize(MAX_ICON_SIZE);
 			} catch (Exception e) {
-				System.err.println("Error loading icon for item " + itemId + ": " + e.getMessage());
+				log.error("Error loading icon for item {}", itemId, e);
 				setIcon(null);
 			}
 		}
@@ -1365,7 +1367,7 @@ class ResourceModePanel extends JPanel {
 					setIcon(new javax.swing.ImageIcon(scaledImage));
 				}
 			} catch (Exception e) {
-				System.err.println("Error scaling icon: " + e.getMessage());
+				log.error("Error scaling icon", e);
 			}
 		}
 	}

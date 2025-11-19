@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import com.google.inject.Singleton;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.Skill;
@@ -28,6 +29,7 @@ import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
 @Getter
 @Singleton
+@Slf4j
 class BoneShardHelperPanel extends PluginPanel {
 	private static final Pattern NON_NUMERIC = Pattern.compile("\\D");
 
@@ -163,7 +165,7 @@ class BoneShardHelperPanel extends PluginPanel {
 				// Refresh current stats to populate fields with player's current prayer data
 				refreshCurrentStats();
 			} catch (Exception e) {
-				System.err.println("Error initializing prayer calculator on first panel open: " + e.getMessage());
+				log.error("Error initializing prayer calculator on first panel open", e);
 			}
 		}
 	}
@@ -363,13 +365,13 @@ class BoneShardHelperPanel extends PluginPanel {
 				// Validate that XP and level are consistent
 				int expectedLevel = Experience.getLevelForXp(currentXP);
 				if (currentLevel != expectedLevel) {
-					System.err.println("Warning: Prayer XP/Level inconsistency detected. XP: " + currentXP + ", Level: "
-							+ currentLevel + ", Expected: " + expectedLevel);
+					log.warn("Prayer XP/Level inconsistency detected. XP: {}, Level: {}, Expected: {}",
+							currentXP, currentLevel, expectedLevel);
 				}
 
 				// Validate XP bounds
 				if (currentXP < 0 || currentXP > Experience.MAX_SKILL_XP) {
-					System.err.println("Warning: Prayer XP out of bounds: " + currentXP);
+					log.warn("Prayer XP out of bounds: {}", currentXP);
 					dataAvailable = false;
 					currentXP = null;
 					currentLevel = null;
@@ -377,18 +379,18 @@ class BoneShardHelperPanel extends PluginPanel {
 
 				// Validate level bounds
 				if (currentLevel != null && (currentLevel < 1 || currentLevel > Experience.MAX_VIRT_LEVEL)) {
-					System.err.println("Warning: Prayer level out of bounds: " + currentLevel);
+					log.warn("Prayer level out of bounds: {}", currentLevel);
 					dataAvailable = false;
 					currentXP = null;
 					currentLevel = null;
 				}
 
 				if (fromPlugin && dataAvailable) {
-					System.out.println("Prayer XP detection working: Level " + currentLevel + " ("
-							+ String.format("%,d", currentXP) + " XP)");
+					log.debug("Prayer XP detection working: Level {} ({} XP)", currentLevel,
+							String.format("%,d", currentXP));
 				}
 			} catch (Exception e) {
-				System.err.println("Error retrieving prayer data from client: " + e.getMessage());
+				log.error("Error retrieving prayer data from client", e);
 				dataAvailable = false;
 				currentXP = null;
 				currentLevel = null;
@@ -433,7 +435,7 @@ class BoneShardHelperPanel extends PluginPanel {
 						"Game data unavailable. Please log in and try again, or manually enter your current stats.");
 			}
 		} else if (fromPlugin && !dataAvailable) {
-			System.out.println("Prayer data unavailable during validation");
+			log.debug("Prayer data unavailable during validation");
 		}
 	}
 
@@ -595,7 +597,7 @@ class BoneShardHelperPanel extends PluginPanel {
 	}
 
 	private void handleCalculationError(String context, Exception e) {
-		System.err.println("Prayer Calculator: " + context + " - " + e.getMessage());
+		log.error("Prayer Calculator: {}", context, e);
 		showValidationError("Calculation error: Please check your input values");
 	}
 
@@ -767,7 +769,8 @@ class BoneShardHelperPanel extends PluginPanel {
 					// Update with empty bone resources to show 0 values with icons
 					resourceModePanel.updateResourceBreakdown(boneResources);
 
-					// Update achievable level with 0 shards to show proper 0 values and icons (use debug override if available)
+					// Update achievable level with 0 shards to show proper 0 values and icons (use
+					// debug override if available)
 					int currentXP = getCurrentXPInput();
 					boolean useSunfireWine = isSunfireWineSelected();
 					int effectiveShards = resourceModePanel.getEffectiveTotalShards(0);
@@ -807,7 +810,7 @@ class BoneShardHelperPanel extends PluginPanel {
 
 			} catch (Exception ex) {
 				// Requirement 10.5: Log errors without crashing RuneLite
-				System.err.println("Prayer Calculator: Resource scan failed - " + ex.getMessage());
+				log.error("Prayer Calculator: Resource scan failed", ex);
 				resourceModePanel.updateDebugError("Scan failed: " + ex.getMessage());
 			}
 		});
