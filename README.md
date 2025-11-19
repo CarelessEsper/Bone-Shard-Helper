@@ -37,6 +37,7 @@ These values can be overwritten by the user, and restored by pressing the refres
 
 ### Under consideration
 - Add option for user to include banked material as part of calculations
+- Add support for an incomplete Zealot's robe set (i.e. 1-3 pieces, not just the full set)
 
 # Screenshots
 ![bone-shard-helper-plugin](/assets/Bone%20Shard%20Plugin%20info_2.png "bone-shard-plugin-info")
