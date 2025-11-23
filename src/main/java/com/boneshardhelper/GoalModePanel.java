@@ -802,6 +802,10 @@ class GoalModePanel extends JPanel {
 				return BoneType.BLESSED_HYDRA_BONES;
 			case ZOGRE_BONES:
 				return BoneType.BLESSED_ZOGRE_BONES;
+			case FROST_DRAGON_BONES:
+				return BoneType.BLESSED_FROST_DRAGON_BONES;
+			case STRYKEWYRM_BONES:
+				return BoneType.BLESSED_STRYKEWYRM_BONES;
 			default:
 				return boneType; // Return original type for blessed bones and special types
 		}

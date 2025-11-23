@@ -1077,6 +1077,10 @@ class ResourceModePanel extends JPanel {
 				return 22786; // Hydra bones
 			case BLESSED_ZOGRE_BONES:
 				return 4812; // Zogre bones
+			case BLESSED_FROST_DRAGON_BONES:
+				return 31729; // Frost dragon bones
+			case BLESSED_STRYKEWYRM_BONES:
+				return 31726; // Strykewyrm bones
 			case BLESSED_BONE_STATUETTE0:
 			case BLESSED_BONE_STATUETTE1:
 			case BLESSED_BONE_STATUETTE2:
@@ -1158,6 +1162,10 @@ class ResourceModePanel extends JPanel {
 				return BoneType.BLESSED_HYDRA_BONES;
 			case ZOGRE_BONES:
 				return BoneType.BLESSED_ZOGRE_BONES;
+			case FROST_DRAGON_BONES:
+				return BoneType.BLESSED_FROST_DRAGON_BONES;
+			case STRYKEWYRM_BONES:
+				return BoneType.BLESSED_STRYKEWYRM_BONES;
 			default:
 				return boneType; // Return original type for blessed bones and special types
 		}
