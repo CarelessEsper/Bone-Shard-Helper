@@ -6,7 +6,9 @@ import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -26,13 +28,13 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
 
 // RuneLite's ConfigPanel Section, reimplemented
-public class FoldingSection extends JPanel
+public class FoldingSection extends JPanel 
 {
     private static final ImageIcon SECTION_EXPAND_ICON;
     private static final ImageIcon SECTION_EXPAND_ICON_HOVER;
     private static final ImageIcon SECTION_RETRACT_ICON;
     private static final ImageIcon SECTION_RETRACT_ICON_HOVER;
-    static
+    static 
     {
         BufferedImage sectionRetractIcon = ImageUtil.loadImageResource(ConfigPlugin.class, "/util/arrow_right.png");
         sectionRetractIcon = ImageUtil.luminanceOffset(sectionRetractIcon, -121);
@@ -48,85 +50,102 @@ public class FoldingSection extends JPanel
     @Getter
     private boolean isOpen = true;
 
-    public FoldingSection(final String header, final String description, JComponent... components)
-{
-    this(header, description, ImmutableList.copyOf(components));
-}
+    private final List<Runnable> expansionListeners = new ArrayList<>();
 
-public FoldingSection(final String header, final String description, Collection<JComponent> components)
-{
-    this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    this.setMinimumSize(new Dimension(PluginPanel.PANEL_WIDTH, 0));
-
-    final JPanel sectionHeader = new JPanel();
-    sectionHeader.setLayout(new BorderLayout());
-    sectionHeader.setMinimumSize(new Dimension(PluginPanel.PANEL_WIDTH, 0));
-    sectionHeader.setBorder(new CompoundBorder(
-        new MatteBorder(0, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR),
-        new EmptyBorder(0, 0, 3, 1)));
-    this.add(sectionHeader, BorderLayout.NORTH);
-
-    sectionToggle = new JButton();
-    sectionToggle.setIcon(isOpen ? SECTION_RETRACT_ICON : SECTION_EXPAND_ICON);
-    sectionToggle.setRolloverIcon(isOpen ? SECTION_RETRACT_ICON_HOVER : SECTION_EXPAND_ICON_HOVER);
-    sectionToggle.setPreferredSize(new Dimension(18, 0));
-    sectionToggle.setBorder(new EmptyBorder(0, 0, 0, 5));
-    sectionToggle.setToolTipText(isOpen ? "Retract" : "Expand");
-    SwingUtil.removeButtonDecorations(sectionToggle);
-    sectionHeader.add(sectionToggle, BorderLayout.WEST);
-
-    final JLabel sectionName = new JLabel(header);
-    sectionName.setForeground(ColorScheme.BRAND_ORANGE);
-    sectionName.setFont(FontManager.getRunescapeBoldFont());
-    if (description != null)
+    public FoldingSection(final String header, final String description, JComponent... components) 
     {
-        sectionName.setToolTipText("<html>" + header + ":<br>" + description + "</html>");
+        this(header, description, ImmutableList.copyOf(components));
     }
-    sectionHeader.add(sectionName, BorderLayout.CENTER);
 
-    sectionContents = new JPanel();
-    sectionContents.setLayout(new DynamicGridLayout(0, 1, 0, 5));
-    sectionContents.setMinimumSize(new Dimension(PluginPanel.PANEL_WIDTH, 0));
-    sectionContents.setBorder(new CompoundBorder(
-        new MatteBorder(0, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR),
-        new EmptyBorder(PluginPanel.BORDER_OFFSET, 0, PluginPanel.BORDER_OFFSET, 0)));
-    sectionContents.setVisible(isOpen);
-    for (final JComponent c : components)
+    public FoldingSection(final String header, final String description, Collection<JComponent> components) 
     {
-        sectionContents.add(c);
-    }
-    this.add(sectionContents, BorderLayout.SOUTH);
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        this.setMinimumSize(new Dimension(PluginPanel.PANEL_WIDTH, 0));
 
-    // Add listeners to each part of the header so that it's easier to toggle them
-    final MouseAdapter adapter = new MouseAdapter()
-    {
-    @Override
-        public void mouseClicked(MouseEvent e)
+        final JPanel sectionHeader = new JPanel();
+        sectionHeader.setLayout(new BorderLayout());
+        sectionHeader.setMinimumSize(new Dimension(PluginPanel.PANEL_WIDTH, 0));
+        sectionHeader.setBorder(new CompoundBorder(
+                new MatteBorder(0, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(0, 0, 3, 1)));
+        this.add(sectionHeader, BorderLayout.NORTH);
+
+        sectionToggle = new JButton();
+        sectionToggle.setIcon(isOpen ? SECTION_RETRACT_ICON : SECTION_EXPAND_ICON);
+        sectionToggle.setRolloverIcon(isOpen ? SECTION_RETRACT_ICON_HOVER : SECTION_EXPAND_ICON_HOVER);
+        sectionToggle.setPreferredSize(new Dimension(18, 0));
+        sectionToggle.setBorder(new EmptyBorder(0, 0, 0, 5));
+        sectionToggle.setToolTipText(isOpen ? "Retract" : "Expand");
+        SwingUtil.removeButtonDecorations(sectionToggle);
+        sectionHeader.add(sectionToggle, BorderLayout.WEST);
+
+        final JLabel sectionName = new JLabel(header);
+        sectionName.setForeground(ColorScheme.BRAND_ORANGE);
+        sectionName.setFont(FontManager.getRunescapeBoldFont());
+        if (description != null) 
         {
-            toggle();
+            sectionName.setToolTipText("<html>" + header + ":<br>" + description + "</html>");
         }
-    };
-    sectionToggle.addActionListener(actionEvent -> toggle());
-    sectionName.addMouseListener(adapter);
-    sectionHeader.addMouseListener(adapter);
-}
+        sectionHeader.add(sectionName, BorderLayout.CENTER);
 
-private void toggle()
-{
-    isOpen = !isOpen;
-    sectionToggle.setIcon(isOpen ? SECTION_RETRACT_ICON : SECTION_EXPAND_ICON);
-    sectionToggle.setRolloverIcon(isOpen ? SECTION_RETRACT_ICON_HOVER : SECTION_EXPAND_ICON_HOVER);
-    sectionToggle.setToolTipText(isOpen ? "Retract" : "Expand");
-    sectionContents.setVisible(isOpen);
-}
+        sectionContents = new JPanel();
+        sectionContents.setLayout(new DynamicGridLayout(0, 1, 0, 5));
+        sectionContents.setMinimumSize(new Dimension(PluginPanel.PANEL_WIDTH, 0));
+        sectionContents.setBorder(new CompoundBorder(
+                new MatteBorder(0, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(PluginPanel.BORDER_OFFSET, 0, PluginPanel.BORDER_OFFSET, 0)));
+        sectionContents.setVisible(isOpen);
+        for (final JComponent c : components) 
+        {
+            sectionContents.add(c);
+        }
+        this.add(sectionContents, BorderLayout.SOUTH);
 
-public void setOpen(final boolean open)
-{
-    if (isOpen == open)
-    {
-        return;
+        // Add listeners to each part of the header so that it's easier to toggle them
+        final MouseAdapter adapter = new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                toggle();
+            }
+        };
+        sectionToggle.addActionListener(actionEvent -> toggle());
+        sectionName.addMouseListener(adapter);
+        sectionHeader.addMouseListener(adapter);
     }
 
-    toggle();
-}
+    private void toggle() 
+    {
+        boolean wasOpen = isOpen;
+        isOpen = !isOpen;
+        sectionToggle.setIcon(isOpen ? SECTION_RETRACT_ICON : SECTION_EXPAND_ICON);
+        sectionToggle.setRolloverIcon(isOpen ? SECTION_RETRACT_ICON_HOVER : SECTION_EXPAND_ICON_HOVER);
+        sectionToggle.setToolTipText(isOpen ? "Retract" : "Expand");
+        sectionContents.setVisible(isOpen);
+
+        if (!wasOpen && isOpen) 
+            {
+            for (Runnable listener : expansionListeners) {
+                listener.run();
+            }
+        }
+    }
+
+    public void setOpen(final boolean open) 
+    {
+        if (isOpen == open) 
+            {
+            return;
+        }
+
+        toggle();
+    }
+
+    public void addExpansionListener(Runnable listener) 
+    {
+        if (listener != null) {
+            expansionListeners.add(listener);
+        }
+    }
 }
