@@ -66,7 +66,7 @@ class BoneShardHelperPanel extends PluginPanel {
 
 	@Inject
 	BoneShardHelperPanel(Client client, BoneResourceScanner resourceScanner, BoneShardHelperConfig config,
-			ItemManager itemManager) {
+			ItemManager itemManager, net.runelite.client.hiscore.HiscoreClient hiscoreClient) {
 		super();
 		this.client = client;
 		this.resourceScanner = resourceScanner;
@@ -82,6 +82,7 @@ class BoneShardHelperPanel extends PluginPanel {
 		// Inject dependencies into Goal Mode panel
 		goalModePanel.setResourceScanner(resourceScanner);
 		goalModePanel.setItemManager(itemManager);
+		goalModePanel.setHiscoreClient(hiscoreClient);
 
 		// Set up debug mode in Goal Mode panel
 		goalModePanel.setDebugMode(config.debugMode(), this);
