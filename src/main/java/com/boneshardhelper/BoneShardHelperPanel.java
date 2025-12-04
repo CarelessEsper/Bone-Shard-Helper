@@ -836,6 +836,9 @@ class BoneShardHelperPanel extends PluginPanel {
 		} catch (Exception e) {
 			handleCalculationError("Error updating Resource Mode calculations on wine type change", e);
 		}
+
+		// Trigger resource planning recalculation (will recalculate immediately if expanded, or flag for update if collapsed)
+		triggerResourcePlanningRecalculation();
 	}
 
 	// Handle zealot robes checkbox changes to update calculations
@@ -861,6 +864,7 @@ class BoneShardHelperPanel extends PluginPanel {
 		// Update zealot robes warning display for both modes
 		goalModePanel.updateZealotRobesWarningDisplay();
 		resourceModePanel.updateZealotRobesWarningDisplay();
+		triggerResourcePlanningRecalculation();
 	}
 
 	public void updateDebugMode(boolean debugMode) {

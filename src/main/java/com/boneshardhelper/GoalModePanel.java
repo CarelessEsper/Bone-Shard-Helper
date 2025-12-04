@@ -75,6 +75,10 @@ class GoalModePanel extends JPanel {
 	private IconTextField hiscoreLookupField;
 	private JLabel debugStatusLabel;
 
+	// Resource planning recalculation tracking
+	private boolean resourcePlanningNeedsRecalculation = false;
+	private boolean hasInventoryData = false;
+
 	GoalModePanel() {
 		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -129,6 +133,14 @@ class GoalModePanel extends JPanel {
 		// Create Resource Planning section
 		resourcePlanningSection = createResourcePlanningSection();
 
+		// Add expansion listener to trigger recalculation when section is expanded
+		resourcePlanningSection.addExpansionListener(() -> {
+			if (hasInventoryData && resourcePlanningNeedsRecalculation) {
+				performInventoryScanInternal();
+				resourcePlanningNeedsRecalculation = false;
+			}
+		});
+
 		// Create debug section (initially hidden)
 		debugSection = createDebugSection();
 
@@ -151,8 +163,14 @@ class GoalModePanel extends JPanel {
 	}
 
 	public void triggerResourcePlanningRecalculation() {
-		if (resourcePlanningSection.isOpen() && resourceScanner != null) {
-			performInventoryScanInternal();
+		if (hasInventoryData) {
+			if (resourcePlanningSection.isOpen()) {
+				// If section is open, recalculate immediately
+				performInventoryScanInternal();
+			} else {
+				// If section is closed, mark for recalculation when expanded
+				resourcePlanningNeedsRecalculation = true;
+			}
 		}
 	}
 
@@ -624,6 +642,9 @@ class GoalModePanel extends JPanel {
 
 	private void updateResourceRecommendations(Map<BoneType, Integer> inventoryBones, int currentShards,
 			int requiredShards) {
+		// Mark that we have inventory data available for recalculation
+		hasInventoryData = true;
+
 		// Clear existing recommendations
 		recommendationsTableModel.setRowCount(0);
 
