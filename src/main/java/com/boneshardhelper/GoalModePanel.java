@@ -49,6 +49,7 @@ class GoalModePanel extends JPanel {
 	private FoldingSection resourcesRequiredSection;
 	private JLabel boneShardsLabel;
 	private JLabel wineLabel;
+	private JLabel sunfireSplinterLabel;
 	private final JLabel warningLabel;
 
 	// Item manager for icons
@@ -107,8 +108,12 @@ class GoalModePanel extends JPanel {
 		checkboxPanel.setBorder(new EmptyBorder(10, 0, 0, 0)); // Add some top spacing
 
 		// Checkboxes stacked vertically
-		uiCheckboxSunfireWine = addCheckboxComponent(checkboxPanel, "Sunfire Wine (6 XP/shard)");
+		uiCheckboxSunfireWine = addCheckboxComponent(checkboxPanel, "Sunfire Wine");
 		uiCheckboxZealotRobes = addCheckboxComponent(checkboxPanel, "Zealot's Robes");
+
+		// Add tooltips to checkboxes
+		uiCheckboxSunfireWine.setToolTipText("+20% prayer XP per blessed bone shard");
+		uiCheckboxZealotRobes.setToolTipText("5% chance to save bone resources");
 
 		// Add panels to input panel
 		inputPanel.add(fieldsPanel, BorderLayout.CENTER);
@@ -303,6 +308,7 @@ class GoalModePanel extends JPanel {
 
 			boneShardsLabel.setText("Calculation error");
 			wineLabel.setText("Calculation error");
+			sunfireSplinterLabel.setText("Calculation error");
 			showValidationError("Calculation error: Please check your input values");
 		}
 	}
@@ -312,6 +318,8 @@ class GoalModePanel extends JPanel {
 		boneShardsLabel.setIcon(null);
 		wineLabel.setText("Calculate to see results");
 		wineLabel.setIcon(null);
+		sunfireSplinterLabel.setText("Calculate to see results");
+		sunfireSplinterLabel.setIcon(null);
 		warningLabel.setText("<html>&nbsp;</html>");
 	}
 
@@ -376,6 +384,31 @@ class GoalModePanel extends JPanel {
 
 			wineLabel.setText(wineText);
 
+			if (useSunfireWine) {
+				int splintersNeeded = winesNeeded * 2;
+
+				if (itemManager != null) {
+					try {
+						sunfireSplinterLabel.setIcon(null);
+						itemManager.getImage(28924, 10, false).addTo(sunfireSplinterLabel);
+					} catch (Exception e) {
+						log.error("Error loading sunfire splinter icon", e);
+					}
+				}
+
+				String splintersText;
+				if (goalAchieved) {
+					splintersText = "0 sunfire splinters";
+				} else {
+					splintersText = String.format("%,d sunfire splinters for wines", splintersNeeded);
+				}
+
+				sunfireSplinterLabel.setText(splintersText);
+				sunfireSplinterLabel.setVisible(true);
+			} else {
+				sunfireSplinterLabel.setVisible(false);
+			}
+
 			// Update zealot robes warning
 			updateZealotRobesWarning();
 
@@ -383,6 +416,7 @@ class GoalModePanel extends JPanel {
 			log.error("Prayer Calculator: Error updating resources display", e);
 			boneShardsLabel.setText("Error loading display");
 			wineLabel.setText("Error loading display");
+			sunfireSplinterLabel.setText("Error loading display");
 		}
 	}
 
@@ -401,12 +435,29 @@ class GoalModePanel extends JPanel {
 		wineLabel.setForeground(Color.WHITE);
 		wineLabel.setFont(FontManager.getRunescapeSmallFont());
 
-		// Create the folding section with the labels as content
+		sunfireSplinterLabel = new JLabel("Calculate to see results");
+		sunfireSplinterLabel.setForeground(Color.WHITE);
+		sunfireSplinterLabel.setFont(FontManager.getRunescapeSmallFont());
+
+		// Create a panel that properly handles visibility
+		JPanel labelsPanel = new JPanel();
+		labelsPanel.setLayout(new javax.swing.BoxLayout(labelsPanel, javax.swing.BoxLayout.Y_AXIS));
+		labelsPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		// Add labels with small borders for spacing
+		boneShardsLabel.setBorder(new EmptyBorder(1, 0, 1, 0));
+		wineLabel.setBorder(new EmptyBorder(1, 0, 1, 0));
+		sunfireSplinterLabel.setBorder(new EmptyBorder(1, 0, 1, 0));
+
+		labelsPanel.add(boneShardsLabel);
+		labelsPanel.add(wineLabel);
+		labelsPanel.add(sunfireSplinterLabel);
+
+		// Create the folding section with the panel
 		return new FoldingSection(
 				"Total Resources Needed",
 				"Bone shards and wines required to reach your goal",
-				boneShardsLabel,
-				wineLabel);
+				labelsPanel);
 	}
 
 	public void setItemManager(ItemManager itemManager) {
@@ -448,6 +499,18 @@ class GoalModePanel extends JPanel {
 				itemManager.getImage(wineItemId).addTo(wineLabel);
 			} catch (Exception e) {
 				log.error("Error refreshing wine icon", e);
+			}
+		}
+
+		if (!sunfireSplinterLabel.getText().equals("Calculate to see results") &&
+				!sunfireSplinterLabel.getText().equals("Calculation error") &&
+				isSunfireWineSelected() && sunfireSplinterLabel.isVisible()) {
+
+			try {
+				sunfireSplinterLabel.setIcon(null);
+				itemManager.getImage(28924, 10, false).addTo(sunfireSplinterLabel);
+			} catch (Exception e) {
+				log.error("Error refreshing sunfire splinter icon", e);
 			}
 		}
 	}

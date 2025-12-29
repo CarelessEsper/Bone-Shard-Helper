@@ -42,7 +42,7 @@ class ResourceModePanel extends JPanel {
 	// Debug section (only visible when debug mode is enabled)
 	private FoldingSection debugSection;
 	private JTextField uiFieldDebugShardOverride;
-	
+
 	// Store the last scanned shard total for debug override functionality
 	private int lastScannedShardTotal = 0;
 
@@ -53,6 +53,7 @@ class ResourceModePanel extends JPanel {
 	private final JLabel totalShardsLabel;
 	private final JLabel totalXPValueLabel;
 	private final JLabel totalWineLabel;
+	private final JLabel sunfireSplinterLabel;
 	private final JLabel achievableLevelLabel;
 	private final JLabel zealotRobesWarningLabel;
 	private final JLabel debugStatusLabel;
@@ -85,8 +86,12 @@ class ResourceModePanel extends JPanel {
 		checkboxPanel.setBorder(new EmptyBorder(10, 0, 0, 0)); // Add some top spacing
 
 		// Checkboxes stacked vertically (shared with Goal Mode)
-		uiCheckboxSunfireWine = addCheckboxComponent(checkboxPanel, "Sunfire Wine (6 XP/shard)");
+		uiCheckboxSunfireWine = addCheckboxComponent(checkboxPanel, "Sunfire Wine");
 		uiCheckboxZealotRobes = addCheckboxComponent(checkboxPanel, "Zealot's Robes");
+
+		// Add tooltips to checkboxes
+		uiCheckboxSunfireWine.setToolTipText("+20% prayer XP per blessed bone shard");
+		uiCheckboxZealotRobes.setToolTipText("5% chance to save bone resources");
 
 		uiButtonScanResources = createStyledScanButton("Scan Inventory");
 
@@ -119,6 +124,7 @@ class ResourceModePanel extends JPanel {
 		totalShardsLabel = new JLabel("Scan inventory to see results");
 		totalXPValueLabel = new JLabel("Scan inventory to see results");
 		totalWineLabel = new JLabel("Scan inventory to see results");
+		sunfireSplinterLabel = new JLabel("Scan inventory to see results");
 		achievableLevelLabel = new JLabel("Scan inventory to see results");
 
 		// Create Goal Mode-style results section
@@ -296,18 +302,17 @@ class ResourceModePanel extends JPanel {
 		// Get the effective shards (debug override if available, otherwise last scanned total)
 		int currentXP = getCurrentXPInput();
 		boolean useSunfireWine = isSunfireWineSelected();
-		
+
 		int effectiveShards = getEffectiveTotalShards(lastScannedShardTotal);
 		updateAchievableLevel(effectiveShards, currentXP, useSunfireWine);
-		
+
 		updateTotalShardsLabel();
 	}
-
 
 	private void updateTotalShardsLabel() {
 		try {
 			int effectiveShards = getEffectiveTotalShards(lastScannedShardTotal);
-			
+
 			// Show different text based on whether debug override is active
 			if (isDebugModeEnabled() && uiFieldDebugShardOverride != null && getDebugShardOverrideInput() > 0) {
 				totalShardsLabel.setText(String.format("%,d shard value (DEBUG OVERRIDE)", effectiveShards));
@@ -413,45 +418,52 @@ class ResourceModePanel extends JPanel {
 	private FoldingSection createCalculationResultsSection() {
 		// Creates a calculation results section with labels for total shards, XP, wine,
 		// 		and achievable level enclosed in a FoldingSection.
-		// Create a vertical panel for all the labels
-		JPanel labelsPanel = new JPanel();
-		labelsPanel.setLayout(new java.awt.GridLayout(4, 1, 0, 2)); // 4 rows, 1 column, 2px vertical gap
-		labelsPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		// Total Shard Value label with blessed bone shards icon
+		// Initialize the labels
 		totalShardsLabel.setText("Scan inventory to see results");
 		totalShardsLabel.setForeground(Color.WHITE);
 		totalShardsLabel.setFont(FontManager.getRunescapeSmallFont());
-		labelsPanel.add(totalShardsLabel);
 
-		// Total XP Value label with XP icon
 		totalXPValueLabel.setText("Scan inventory to see results");
 		totalXPValueLabel.setForeground(Color.WHITE);
 		totalXPValueLabel.setFont(FontManager.getRunescapeSmallFont());
-		labelsPanel.add(totalXPValueLabel);
 
-		// Total Wine label with wine icon
 		totalWineLabel.setText("Scan inventory to see results");
 		totalWineLabel.setForeground(Color.WHITE);
 		totalWineLabel.setFont(FontManager.getRunescapeSmallFont());
-		labelsPanel.add(totalWineLabel);
 
-		// Achievable Level label with Prayer skill icon
+		sunfireSplinterLabel.setText("Scan inventory to see results");
+		sunfireSplinterLabel.setForeground(Color.WHITE);
+		sunfireSplinterLabel.setFont(FontManager.getRunescapeSmallFont());
+		sunfireSplinterLabel.setVisible(false); // Hide initially - only show when sunfire wine is selected and results are calculated
+
 		achievableLevelLabel.setText("Scan inventory to see results");
 		achievableLevelLabel.setForeground(Color.WHITE);
 		achievableLevelLabel.setFont(FontManager.getRunescapeSmallFont());
-		labelsPanel.add(achievableLevelLabel);
 
-		// Create content panel to hold the labels
-		JPanel contentPanel = new JPanel(new java.awt.BorderLayout());
-		contentPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		contentPanel.add(labelsPanel, java.awt.BorderLayout.WEST);
+		// Create a panel that handles visibility and aligns text properly
+		JPanel labelsPanel = new JPanel();
+		labelsPanel.setLayout(new javax.swing.BoxLayout(labelsPanel, javax.swing.BoxLayout.Y_AXIS));
+		labelsPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		// Add labels with small borders for spacing instead of struts
+		totalShardsLabel.setBorder(new EmptyBorder(1, 0, 1, 0));
+		totalXPValueLabel.setBorder(new EmptyBorder(1, 0, 1, 0));
+		totalWineLabel.setBorder(new EmptyBorder(1, 0, 1, 0));
+		sunfireSplinterLabel.setBorder(new EmptyBorder(1, 0, 1, 0));
+		achievableLevelLabel.setBorder(new EmptyBorder(1, 0, 1, 0));
+
+		labelsPanel.add(totalShardsLabel);
+		labelsPanel.add(totalXPValueLabel);
+		labelsPanel.add(totalWineLabel);
+		labelsPanel.add(sunfireSplinterLabel);
+		labelsPanel.add(achievableLevelLabel);
 
 		// Create the folding section
 		FoldingSection section = new FoldingSection(
 				"Calculation Results",
 				"Summary of your inventory's shard value and achievable prayer level",
-				contentPanel);
+				labelsPanel);
 
 		// Set to expanded by default
 		section.setOpen(true);
@@ -654,12 +666,12 @@ class ResourceModePanel extends JPanel {
 				updateDebugError("Total shards exceed maximum calculable amount");
 			} else {
 				int scannedShards = (int) totalShardsLong;
-				
+
 				// Store the scanned total for debug override functionality
 				lastScannedShardTotal = scannedShards;
-				
+
 				int effectiveShards = getEffectiveTotalShards(scannedShards);
-				
+
 				// Show different text based on whether debug override is active
 				if (isDebugModeEnabled() && uiFieldDebugShardOverride != null && getDebugShardOverrideInput() > 0) {
 					totalShardsLabel.setText(String.format("%,d shard value (DEBUG OVERRIDE)", effectiveShards));
@@ -757,6 +769,25 @@ class ResourceModePanel extends JPanel {
 				}
 			}
 
+			if (useSunfireWine) {
+				int splintersNeeded = winesNeeded * 2;
+
+				if (itemManager != null) {
+					try {
+						sunfireSplinterLabel.setIcon(null);
+						itemManager.getImage(28924, 10, false).addTo(sunfireSplinterLabel);
+					} catch (Exception e) {
+						log.error("Error loading sunfire splinter icon", e);
+					}
+				}
+
+				String splintersText = String.format("%,d sunfire splinters for wines", splintersNeeded);
+				sunfireSplinterLabel.setText(splintersText);
+				sunfireSplinterLabel.setVisible(true);
+			} else {
+				sunfireSplinterLabel.setVisible(false);
+			}
+
 			// Calculate level gain and format with color
 			int currentLevel = net.runelite.api.Experience.getLevelForXp(currentXP);
 			int levelGain = achievableLevel - currentLevel;
@@ -811,28 +842,33 @@ class ResourceModePanel extends JPanel {
 		debugStatusLabel.setForeground(Color.GREEN);
 	}
 
-
 	public void clearResourceBreakdown() {
 		// Clears the resource breakdown table and resets labels.
 		DefaultTableModel model = (DefaultTableModel) resourceBreakdownTable.getModel();
 		model.setRowCount(0);
-		
+
 		// Reset the stored scanned total
 		lastScannedShardTotal = 0;
-		
+
 		totalShardsLabel.setText("Scan inventory to see results");
 		totalXPValueLabel.setText("Scan inventory to see results");
+		totalWineLabel.setText("Scan inventory to see results");
+		sunfireSplinterLabel.setText("Scan inventory to see results");
+		sunfireSplinterLabel.setVisible(false); // Hide splinter label when clearing
 		achievableLevelLabel.setText("Scan inventory to see results");
 		zealotRobesWarningLabel.setText("<html>&nbsp;</html>"); // Clear warning
 
 		// Clear icons
 		totalShardsLabel.setIcon(null);
 		totalXPValueLabel.setIcon(null);
+		totalWineLabel.setIcon(null);
+		sunfireSplinterLabel.setIcon(null);
 		achievableLevelLabel.setIcon(null);
 	}
 
 	public void updateCalculations() {
-		// Use the existing recalculateWithCurrentSettings method which properly handles debug override
+		// Use the existing recalculateWithCurrentSettings method which properly handles
+		// debug override
 		recalculateWithCurrentSettings();
 	}
 
@@ -844,11 +880,10 @@ class ResourceModePanel extends JPanel {
 		}
 	}
 
-
 	public void recalculateWithCurrentSettings() {
 		// Only recalculate if we have existing data (breakdown table has rows) or debug override is active
-		if (resourceBreakdownTable.getRowCount() == 0 && 
-			!(isDebugModeEnabled() && uiFieldDebugShardOverride != null && getDebugShardOverrideInput() > 0)) {
+		if (resourceBreakdownTable.getRowCount() == 0 &&
+				!(isDebugModeEnabled() && uiFieldDebugShardOverride != null && getDebugShardOverrideInput() > 0)) {
 			return;
 		}
 
@@ -876,7 +911,7 @@ class ResourceModePanel extends JPanel {
 			// Use effective shards (respects debug override)
 			int effectiveShards = getEffectiveTotalShards(scannedShards);
 			updateAchievableLevel(effectiveShards, currentXP, useSunfireWine);
-			
+
 			// Also update the total shards label to reflect any debug override
 			updateTotalShardsLabel();
 
@@ -900,12 +935,13 @@ class ResourceModePanel extends JPanel {
 			totalShardsLabel.setIcon(null);
 			itemManager.getImage(29381).addTo(totalShardsLabel);
 
-			// Load overall skill icon from resources (for XP label) - use natural size to
-			// match bone shard icon
+			// Load overall skill icon from resources (for XP label) - scale to match item icons
 			java.awt.image.BufferedImage overallIcon = net.runelite.client.util.ImageUtil
 					.loadImageResource(getClass(), "/skill_icons/overall.png");
 			if (overallIcon != null) {
-				totalXPValueLabel.setIcon(new javax.swing.ImageIcon(overallIcon));
+				// Scale to 32x32 to match ItemManager icon size
+				java.awt.Image scaledOverallIcon = overallIcon.getScaledInstance(32, 32, java.awt.Image.SCALE_SMOOTH);
+				totalXPValueLabel.setIcon(new javax.swing.ImageIcon(scaledOverallIcon));
 			}
 
 			// Load wine icon based on current wine type (default to regular wine initially)
@@ -914,12 +950,23 @@ class ResourceModePanel extends JPanel {
 			totalWineLabel.setIcon(null);
 			itemManager.getImage(wineItemId).addTo(totalWineLabel);
 
-			// Load prayer skill icon from resources (for level label) - use natural size to
-			// match bone shard icon
+			// Load splinter icon if sunfire wine is selected and results are displayed
+			if (useSunfireWine && !sunfireSplinterLabel.getText().equals("Scan inventory to see results")) {
+				try {
+					sunfireSplinterLabel.setIcon(null);
+					itemManager.getImage(28924, 10, false).addTo(sunfireSplinterLabel);
+				} catch (Exception e) {
+					log.error("Error loading sunfire splinter icon", e);
+				}
+			}
+
+			// Load prayer skill icon from resources (for level label) - scale to match item icons
 			java.awt.image.BufferedImage prayerIcon = net.runelite.client.util.ImageUtil
 					.loadImageResource(getClass(), "/skill_icons/prayer.png");
 			if (prayerIcon != null) {
-				achievableLevelLabel.setIcon(new javax.swing.ImageIcon(prayerIcon));
+				// Scale to 32x32 to match ItemManager icon size
+				java.awt.Image scaledPrayerIcon = prayerIcon.getScaledInstance(32, 32, java.awt.Image.SCALE_SMOOTH);
+				achievableLevelLabel.setIcon(new javax.swing.ImageIcon(scaledPrayerIcon));
 			}
 		} catch (Exception e) {
 			log.error("Error loading static icons", e);
@@ -981,7 +1028,7 @@ class ResourceModePanel extends JPanel {
 		inputPanel.setBorder(new EmptyBorder(8, 0, 0, 0)); // Add spacing above the input field
 
 		uiFieldDebugShardOverride = addComponent(inputPanel, "Bone Shard Override");
-		
+
 		// Add event listeners to trigger recalculation when debug value changes
 		uiFieldDebugShardOverride.addActionListener(e -> triggerDebugRecalculation());
 		uiFieldDebugShardOverride.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -1016,9 +1063,9 @@ class ResourceModePanel extends JPanel {
 		// Get the bottom panel that contains the reference section and debug section
 		JPanel centerPanel = (JPanel) getComponent(1); // The center panel from constructor
 		JPanel bottomPanel = (JPanel) centerPanel.getComponent(2); // The bottom panel from constructor
-		
+
 		boolean debugModeEnabled = config.debugMode();
-		
+
 		if (debugModeEnabled && debugSection == null) {
 			// Debug mode was enabled - create and add the debug section
 			debugSection = createDebugSection();
@@ -1029,11 +1076,11 @@ class ResourceModePanel extends JPanel {
 			debugSection = null;
 			uiFieldDebugShardOverride = null;
 		}
-		
+
 		// Refresh the layout
 		bottomPanel.revalidate();
 		bottomPanel.repaint();
-		
+
 		// If debug mode was disabled and we had a debug override active, trigger recalculation
 		if (!debugModeEnabled) {
 			triggerDebugRecalculation();
