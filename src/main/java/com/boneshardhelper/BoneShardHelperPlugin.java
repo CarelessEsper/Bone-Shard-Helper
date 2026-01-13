@@ -8,8 +8,10 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import lombok.Getter;
 import net.runelite.api.Client;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Tile;
 import net.runelite.api.TileObject;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.DecorativeObjectDespawned;
 import net.runelite.api.events.DecorativeObjectSpawned;
 import net.runelite.api.events.GameObjectDespawned;
@@ -30,7 +32,7 @@ import net.runelite.client.util.ImageUtil;
 
 @PluginDescriptor(name = "Bone Shard Helper", description = "A helper plugin for Prayer training using bone shards in Varlamore.", tags = {
 		"prayer", "varlamore", "calculator", "planning", "bone", "xp", "training", "wine", "shard", "blessed",
-		"skilling","teomat","ralos" })
+		"skilling", "teomat", "ralos" })
 public class BoneShardHelperPlugin extends Plugin {
 	@Inject
 	private Client client;
@@ -46,6 +48,12 @@ public class BoneShardHelperPlugin extends Plugin {
 
 	@Inject
 	private PrayerObjectOverlay prayerObjectOverlay;
+
+	@Inject
+	private BoneShardOverlay2D boneShardOverlay2D;
+
+	@Inject
+	private BoneShardTrainingState trainingState;
 
 	@Getter
 	private final Map<TileObject, PrayerObject> prayerObjects = new HashMap<>();
@@ -73,12 +81,14 @@ public class BoneShardHelperPlugin extends Plugin {
 		// Set plugin reference in overlay to avoid circular dependency
 		prayerObjectOverlay.setPlugin(this);
 		overlayManager.add(prayerObjectOverlay);
+		overlayManager.add(boneShardOverlay2D);
 	}
 
 	@Override
 	protected void shutDown() throws Exception {
 		clientToolbar.removeNavigation(uiNavigationButton);
 		overlayManager.remove(prayerObjectOverlay);
+		overlayManager.remove(boneShardOverlay2D);
 		prayerObjects.clear();
 	}
 
@@ -141,6 +151,19 @@ public class BoneShardHelperPlugin extends Plugin {
 	@Subscribe
 	public void onDecorativeObjectDespawned(DecorativeObjectDespawned event) {
 		onTileObject(event.getTile(), event.getDecorativeObject(), null);
+	}
+
+	@Subscribe
+	public void onChatMessage(ChatMessage event) {
+		// Check for libation bowl MESBOX messages
+		if (event.getType() == ChatMessageType.MESBOX) {
+			String message = event.getMessage();
+			// Look for messages about sacrificing blessed bone shards
+			if (message.contains("libation bowl currently has enough") || message.contains("100") || message.contains("200") || message.contains("300") || message.contains("400")) {
+				// Trigger a sync when we get bowl information
+				trainingState.onBowlMessageReceived(message);
+			}
+		}
 	}
 
 	private void onTileObject(Tile tile, TileObject oldObject, TileObject newObject) {

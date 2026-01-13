@@ -69,11 +69,11 @@ class PrayerObject
         switch (objectId)
         {
             case 53018: // LIBATION_BOWL
-                return config.getLibationBowlColor();
+                return config.activeObjectColor();
             case 52405: // SHRINE_OF_RALOS
-                return config.getShrineOfRalosColor();
+                return config.activeObjectColor();
             case 52799: // EXPOSED_ALTAR
-                return config.getExposedAltarColor();
+                return config.activeObjectColor();
             default:
                 return java.awt.Color.GREEN; // Fallback color
         }
