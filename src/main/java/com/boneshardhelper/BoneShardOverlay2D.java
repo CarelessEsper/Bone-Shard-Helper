@@ -1,13 +1,10 @@
 package com.boneshardhelper;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import net.runelite.api.Client;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.LineComponent;
@@ -15,20 +12,13 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 
 @Singleton
 public class BoneShardOverlay2D extends OverlayPanel {
-        private static final int REGION_ID = 5681;
-        private final Client client;
-        private final BoneShardHelperPlugin plugin;
         private final BoneShardHelperConfig config;
         private final BoneShardTrainingState state;
 
         @Inject
         private BoneShardOverlay2D(
-                        Client client,
-                        BoneShardHelperPlugin plugin,
                         BoneShardHelperConfig config,
                         BoneShardTrainingState state) {
-                this.client = client;
-                this.plugin = plugin;
                 this.config = config;
                 this.state = state;
                 this.setPosition(OverlayPosition.BOTTOM_LEFT);
@@ -40,12 +30,9 @@ public class BoneShardOverlay2D extends OverlayPanel {
                         return null;
                 }
 
-                if (client.getLocalPlayer().getWorldLocation().getRegionID() != REGION_ID) {
+                if (!state.inTrainingRegion()) {
                         return null;
                 }
-
-                boolean trainingActive = (state.hasBlessedWines() || state.hasUnblessedWines() || state.hasWineInBowl())
-                                && state.hasShards();
 
                 if (config.infoboxTitle()) {
                         panelComponent.getChildren().add(TitleComponent.builder().text("Bone Shard Helper").build());
@@ -59,9 +46,22 @@ public class BoneShardOverlay2D extends OverlayPanel {
 
                 if (config.infoboxActionsLeft()) {
                         panelComponent.getChildren().add(
-                                        LineComponent.builder().left("Actions left")
+                                        LineComponent.builder().left("Actions left: ")
                                                         .right(state.getActionsRemaining() + "").build());
                 }
+
+                // Key tracking values for verification
+                panelComponent.getChildren().add(
+                                LineComponent.builder().left("Wine in bowl: ")
+                                                .right(state.getWineActionsInBowl() + "").build());
+
+                panelComponent.getChildren().add(
+                                LineComponent.builder().left("Prayer points: ")
+                                                .right(state.getCurrentPrayerPoints() + "").build());
+
+                // panelComponent.getChildren().add(
+                // LineComponent.builder().left("Wine count: ")
+                // .right(state.getBlessedWineCount() + "").build());
                 return super.render(graphics);
         }
 }

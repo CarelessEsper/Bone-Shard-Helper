@@ -38,7 +38,7 @@ public interface BoneShardHelperConfig extends Config {
     @Alpha
     @ConfigItem(keyName="inactiveObjectColor", name="Inactive object color", description = "Highlight the color of non-active training objects", section = overlaySection, position = 4)
     default Color inactiveObjectColor() {
-        return Color.GRAY;
+        return Color.DARK_GRAY;
     }
 
     @ConfigItem(keyName="exposedAltarPath", name="Draw path to exposed altar", description = "Draw ground path to the exposed altar when you have unblessed wines in training area", section = overlaySection, position = 5)

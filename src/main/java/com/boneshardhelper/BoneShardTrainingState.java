@@ -26,11 +26,10 @@ public class BoneShardTrainingState {
     private boolean enabled;
 
     // Tracking variables
-    private int cachedBoneShardCount = -1;
-    private int totalActionsPerformed = 0;
-    private int sessionStartWineActions = 0;
-    private TrainingState lastState = null;
-    private int wineActionsInBowl = 0; // Track wine actions in bowl separately
+    private int cachedVarbitValue = -1; // Cache the varbit value
+
+    @Setter
+    private int wineActionsInBowl; // Track wine actions in bowl separately
 
     public enum TrainingState {
         NO_STATE(-1, ""),
@@ -84,7 +83,25 @@ public class BoneShardTrainingState {
 
     // Simple state checks
     public boolean inTrainingRegion() {
-        return client.getLocalPlayer().getWorldLocation().getRegionID() == REGION_ID;
+        int currentRegion = client.getLocalPlayer().getWorldLocation().getRegionID();
+
+        // Check if in the main training region (5681)
+        if (currentRegion == REGION_ID) {
+            return true;
+        }
+
+        // Check if in the additional training area in region 5680
+        if (currentRegion == 5680) {
+            // Check if within the rectangular area from (39,63) to (52,57)
+            int regionX = client.getLocalPlayer().getWorldLocation().getRegionX();
+            int regionY = client.getLocalPlayer().getWorldLocation().getRegionY();
+
+            // The area is bounded by (39,63) and (52,57) - these are opposite corners
+            // So we need: 39 <= regionX <= 52 AND 57 <= regionY <= 63
+            return regionX >= 39 && regionX <= 52 && regionY >= 57 && regionY <= 63;
+        }
+
+        return false;
     }
 
     public boolean hasUnblessedWines() {
@@ -103,43 +120,31 @@ public class BoneShardTrainingState {
         return client.getBoostedSkillLevel(Skill.PRAYER) >= 2;
     }
 
-    public boolean hasWineInBowl() {
-        return wineActionsInBowl > 0;
-    }
-
-    // Get the number of actions remaining from wine in the bowl
+    // Get the number of wine actions remaining in the bowl directly from varbit
     public int getWineActionsInBowl() {
-        updateTrackingState(); // Ensure state is current
+        updateVarbitCache();
         return wineActionsInBowl;
     }
 
-    // Event-driven method called when player checks wine remaining in bowl
-    public void onBowlMessageReceived(String message) {
-        int wineActions = parseWineActionsFromText(message);
-        if (wineActions > 0) {
-            syncWineActionsWithMessage(wineActions);
-        }
+    public boolean hasWineInBowl() {
+        return getWineActionsInBowl() > 0;
     }
 
-    // Sync our tracking with the chat message value
-    private void syncWineActionsWithMessage(int messageActions) {
-        // Simply trust the message and update bowl actions directly
-        wineActionsInBowl = messageActions;
+    // Handle varbit changes from the plugin
+    public void onVarbitChanged(int newValue) {
+        cachedVarbitValue = newValue;
+        wineActionsInBowl = newValue / 100; // Convert varbit value to actions (100 shards per action)
     }
 
-    // Parse wine actions from inspect bowl text
-    private int parseWineActionsFromText(String text) {
-        // Look for the specific values we expect: 100, 200, 300, or 400 shards
-        if (text.contains("400")) {
-            return 4; // 400 shards = 4 actions
-        } else if (text.contains("300")) {
-            return 3; // 300 shards = 3 actions
-        } else if (text.contains("200")) {
-            return 2; // 200 shards = 2 actions
-        } else if (text.contains("100")) {
-            return 1; // 100 shards = 1 action
+    // Update varbit cache when needed
+    private void updateVarbitCache() {
+        if (client != null) {
+            int currentVarbitValue = client.getVarbitValue(9945);
+            if (currentVarbitValue != cachedVarbitValue) {
+                cachedVarbitValue = currentVarbitValue;
+                wineActionsInBowl = currentVarbitValue / 100;
+            }
         }
-        return 0; // No valid shard count found; should never happen
     }
 
     // Action calculations
@@ -155,53 +160,10 @@ public class BoneShardTrainingState {
         return client.getBoostedSkillLevel(Skill.PRAYER);
     }
 
-    public int getActionsPerformed() {
-        updateTrackingState(); // Process any changes first
-        return totalActionsPerformed;
-    }
-
-    // Manage wine charges after a sacrifice action
-    private int updateWineCharges(int currentCharges) {
-        if (currentCharges == 1) {
-            // Bowl would be empty after this action - check if we can refill
-            if (hasBlessedWines() && hasShards()) {
-                return 4; // New wine poured into bowl
-            } else {
-                return 0; // No wines or shards left, bowl goes empty
-            }
-        } else if (currentCharges > 1) {
-            // Normal consumption - reduce by 1
-            return currentCharges - 1;
-        } else {
-            // Bowl was already empty or invalid state
-            return 0;
-        }
-    }
-
-    // Separate method to handle all state updates
-    private void updateTrackingState() {
-        int currentShards = getBlessedBoneShardCount();
-
-        if (cachedBoneShardCount == -1) {
-            cachedBoneShardCount = currentShards;
-            return;
-        }
-
-        // Handle shard consumption (actions performed)
-        if (currentShards < cachedBoneShardCount) {
-            int shardsUsed = cachedBoneShardCount - currentShards;
-            int actionsPerformed = shardsUsed / 100; // 100 shards per sacrifice action
-            totalActionsPerformed += actionsPerformed;
-
-            // Update wine charges for each action performed
-            for (int i = 0; i < actionsPerformed; i++) {
-                wineActionsInBowl = updateWineCharges(wineActionsInBowl);
-            }
-
-            cachedBoneShardCount = currentShards;
-        } else if (currentShards > cachedBoneShardCount) {
-            cachedBoneShardCount = currentShards;
-        }
+    // Debug method to get raw varbit value
+    public int getRawVarbitValue() {
+        updateVarbitCache();
+        return cachedVarbitValue;
     }
 
     // Main state logic
@@ -209,7 +171,7 @@ public class BoneShardTrainingState {
         boolean hasShards = hasShards();
         boolean hasUnblessed = hasUnblessedWines();
         boolean hasBlessed = hasBlessedWines();
-        boolean hasWineInBowl = hasWineInBowl();
+        boolean hasWineInBowl = getWineActionsInBowl() > 0;
         boolean hasPrayer = hasSufficientPrayer();
 
         TrainingState currentState;
@@ -226,26 +188,18 @@ public class BoneShardTrainingState {
             currentState = TrainingState.NO_STATE;
         }
 
-        // Handle state transitions
-        if (lastState != currentState) {
-            if (currentState == TrainingState.SACRIFICE_SHARDS && lastState == TrainingState.BLESS_WINES) {
-                sessionStartWineActions = getBlessedWineCount() * 4;
-                resetActionCounter();
-            }
-            lastState = currentState;
-        }
-
         return currentState;
     }
 
     // Counter methods
     public int getRemainingInventoryActions() {
-        return Math.max(0, sessionStartWineActions - getActionsPerformed());
+        // Calculate wine actions from inventory wines + bowl wine actions
+        return (getBlessedWineCount() * 4) + getWineActionsInBowl();
     }
 
     public int getActionsUntilPrayerRestore() {
         int prayerActions = getCurrentPrayerPoints() / 2;
-        int wineActions = getBlessedWineCount() * 4 + (getWineActionsInBowl());
+        int wineActions = getRemainingInventoryActions();
         int shardActions = (int) Math.ceil(getBlessedBoneShardCount() / 100.0);
 
         int availableActions = Math.min(wineActions, shardActions);
@@ -258,26 +212,12 @@ public class BoneShardTrainingState {
         int inventoryActions = getRemainingInventoryActions();
         int prayerActions = getActionsUntilPrayerRestore();
 
-        // If no session snapshot exists, use prayer actions as fallback
-        if (sessionStartWineActions == 0) {
-            return prayerActions;
-        }
-
         // Return the smaller of the two (the limiting factor)
         return Math.min(inventoryActions, prayerActions);
     }
 
-    public int getSessionStartWineActions() {
-        return sessionStartWineActions;
-    }
-
-    public void resetActionCounter() {
-        totalActionsPerformed = 0;
-        wineActionsInBowl = 0;
-        cachedBoneShardCount = getBlessedBoneShardCount();
-    }
-
-    // TO DO: 
-    //  Handle case where the player logs in with wine still in bowl. 
-    //  Actions remaining will stay out of sync after new wine is poured in, unexpected!
+    // Wine actions tracked via VARLAMORE_PRAYER_WINEQUANT varbit (ID: 9945)
+    // All calculations are done in real-time using current inventory + varbit state
+    // No historical tracking needed - everything is calculated from current game
+    // state
 }
