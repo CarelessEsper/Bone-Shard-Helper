@@ -60,7 +60,7 @@ public interface BoneShardHelperConfig extends Config {
         return true;
     }
 
-    @ConfigItem(keyName="infoboxCurrentState", name = "Display training stage", description="Show current training stage (bless wines, recharge prayer, or sacrifice shards)", section="infoboxSection", position=2)
+    @ConfigItem(keyName="infoboxCurrentState", name = "Display training stage", description="Show current training stage (bless wines, recharge prayer, sacrifice shards, or resupply)", section="infoboxSection", position=2)
     default boolean infoboxCurrentState() {
         return true;
     }

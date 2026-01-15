@@ -17,9 +17,10 @@ import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GroundObjectDespawned;
 import net.runelite.api.events.GroundObjectSpawned;
-import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WallObjectDespawned;
 import net.runelite.api.events.WallObjectSpawned;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
@@ -154,9 +155,8 @@ public class BoneShardHelperPlugin extends Plugin {
 
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event) {
-		// Listen for VARLAMORE_PRAYER_WINEQUANT varbit changes
-		// This varbit tracks the number of wine actions stored in the libation bowl
-		if (event.getVarbitId() == 9945) { // VARLAMORE_PRAYER_WINEQUANT varbit ID
+		// Listen for VARLAMORE_PRAYER_WINEQUANT (tracks wine in libation bowl)
+		if (event.getVarbitId() == VarbitID.VARLAMORE_PRAYER_WINEQUANT) {
 			trainingState.onVarbitChanged(event.getValue());
 		}
 	}

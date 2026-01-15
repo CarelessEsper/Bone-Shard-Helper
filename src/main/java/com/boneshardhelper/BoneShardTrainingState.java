@@ -36,7 +36,8 @@ public class BoneShardTrainingState {
         NO_STATE(-1, ""),
         BLESS_WINES(1, "BLESS WINES"),
         SACRIFICE_SHARDS(2, "SACRIFICE SHARDS"),
-        RECHARGE_PRAYER(3, "RECHARGE PRAYER");
+        RECHARGE_PRAYER(3, "RECHARGE PRAYER"),
+        RESUPPLY(4, "RESUPPLY");
 
         private final int id;
         private final String displayName;
@@ -116,6 +117,10 @@ public class BoneShardTrainingState {
         return hasItem(WINE_ID, BLESSED_WINE_ID);
     }
 
+    public boolean hasEmptyJugs() {
+        return hasItem(EMPTY_JUG_ID);
+    }
+
     public boolean hasShards() {
         return hasItem(BLESSED_BONE_SHARDS_ID);
     }
@@ -158,6 +163,10 @@ public class BoneShardTrainingState {
         return getItemCount(BLESSED_BONE_SHARDS_ID);
     }
 
+    public int getTotalWineJugCount() {
+        return getItemCount(EMPTY_JUG_ID, BLESSED_SUNFIRE_WINE_ID, BLESSED_WINE_ID, WINE_ID, SUNFIRE_WINE_ID);
+    }
+
     public int getCurrentPrayerPoints() {
         return client.getBoostedSkillLevel(Skill.PRAYER);
     }
@@ -175,10 +184,11 @@ public class BoneShardTrainingState {
         boolean hasBlessed = hasBlessedWines();
         boolean hasWineInBowl = getWineActionsInBowl() > 0;
         boolean hasPrayer = hasSufficientPrayer();
+        boolean hasEmptyJugs = hasEmptyJugs();
 
         TrainingState currentState;
 
-        if (!hasShards || (!hasUnblessed && !hasBlessed && !hasWineInBowl)) {
+        if (!hasShards || (!hasUnblessed && !hasBlessed && !hasWineInBowl && !hasEmptyJugs)) {
             currentState = TrainingState.NO_STATE;
         } else if (hasUnblessed) {
             currentState = TrainingState.BLESS_WINES;
@@ -186,6 +196,8 @@ public class BoneShardTrainingState {
             currentState = TrainingState.SACRIFICE_SHARDS;
         } else if ((hasBlessed || hasWineInBowl) && !hasPrayer) {
             currentState = TrainingState.RECHARGE_PRAYER;
+        } else if (!hasBlessed && !hasWineInBowl && hasEmptyJugs && hasShards) {
+            currentState = TrainingState.RESUPPLY;
         } else {
             currentState = TrainingState.NO_STATE;
         }
@@ -214,5 +226,30 @@ public class BoneShardTrainingState {
 
         // Return the smaller of the two (the limiting factor)
         return Math.min(inventoryActions, prayerActions);
+    }
+
+    public int getInventoriesRemaining() {
+        TrainingState currentState = getCurrentTrainingState();
+        if (currentState == TrainingState.NO_STATE) {
+            return 0;
+        }
+        
+        int blessedShards = getBlessedBoneShardCount();
+        int actionsNeeded = (int) Math.ceil((double) blessedShards / 100);
+        int currentActionsAvailable = getRemainingInventoryActions();
+        int remainingActionsNeeded = Math.max(0, actionsNeeded - currentActionsAvailable);
+        
+        // Inventory isn't enough to handle shards
+        if (remainingActionsNeeded > 0) {
+            int totalWineCapacity = getTotalWineJugCount();
+            if (totalWineCapacity == 0) {
+                return 0;
+            }
+            int remainingWinesNeeded = (int) Math.ceil((double) remainingActionsNeeded / 4);
+            return (int) Math.ceil((double) remainingWinesNeeded / totalWineCapacity);
+        } else {
+            // Current inventory is sufficient - 0 more trips needed
+            return 0;
+        }
     }
 }

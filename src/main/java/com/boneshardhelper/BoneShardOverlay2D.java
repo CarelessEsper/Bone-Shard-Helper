@@ -27,7 +27,7 @@ public class BoneShardOverlay2D extends OverlayPanel {
 
         @Override
         public Dimension render(Graphics2D graphics) {
-                if (!config.toggleInfobox()) {
+                if (!config.toggleInfobox() || state.getCurrentTrainingState() == BoneShardTrainingState.TrainingState.NO_STATE) {
                         return null;
                 }
 
@@ -53,6 +53,9 @@ public class BoneShardOverlay2D extends OverlayPanel {
                         case SACRIFICE_SHARDS:
                                 stageColor = Color.GREEN;
                                 break;
+                        case RESUPPLY:
+                                stageColor = Color.YELLOW;
+                                break;
                         default:
                                 stageColor = Color.WHITE;
                                 break;
@@ -64,22 +67,27 @@ public class BoneShardOverlay2D extends OverlayPanel {
                                                 .rightColor(stageColor)
                                                 .build());
 
-                if (config.infoboxActionsLeft()) {
+                if (config.infoboxActionsLeft() && state.getCurrentTrainingState() == BoneShardTrainingState.TrainingState.SACRIFICE_SHARDS) {
                         panelComponent.getChildren().add(
                                         LineComponent.builder().left("Actions left: ")
                                                         .right(state.getActionsRemaining() + "").build());
                 }
 
+                if (config.infoboxInventoriesLeft() 
+                                && state.getCurrentTrainingState() != BoneShardTrainingState.TrainingState.NO_STATE) {
+                        panelComponent.getChildren().add(
+                                        LineComponent.builder().left("Inventories left: ")
+                                                        .right(state.getInventoriesRemaining() + "").build());
+                }
+
                 // Key tracking values for verification
-                panelComponent.getChildren().add(
-                                LineComponent.builder().left("Wine in bowl: ")
-                                                .right(state.getWineActionsInBowl() + "").build());
+                if (config.debugMode()) {
+                        panelComponent.getChildren().add(
+                                        LineComponent.builder().left("Wine in bowl: ")
+                                                        .right(state.getWineActionsInBowl() + "").build());
+                }
 
-                panelComponent.getChildren().add(
-                                LineComponent.builder().left("Prayer points: ")
-                                                .right(state.getCurrentPrayerPoints() + "").build());
-
-                // Show regular wine warning if enabled and in BLESS_WINES state
+                // Show regular wine warning if enabled and in a valid training state
                 if (config.infoboxRegularWineWarning() 
                                 && state.getCurrentTrainingState() != BoneShardTrainingState.TrainingState.NO_STATE
                                 && state.hasRegularWines()) {
