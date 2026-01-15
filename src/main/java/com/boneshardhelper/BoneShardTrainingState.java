@@ -12,6 +12,7 @@ import javax.inject.Singleton;
 @Singleton
 public class BoneShardTrainingState {
     private static final int REGION_ID = 5681;
+    private static final int EMPTY_JUG_ID = 1935;
     private static final int WINE_ID = 1993;
     private static final int SUNFIRE_WINE_ID = 29382;
     private static final int BLESSED_SUNFIRE_WINE_ID = 29384;
@@ -91,13 +92,12 @@ public class BoneShardTrainingState {
         }
 
         // Check if in the additional training area in region 5680
+        //   Includes the tiles along the path from the ralos' rise Pendant of Ates tp to the altar
         if (currentRegion == 5680) {
             // Check if within the rectangular area from (39,63) to (52,57)
             int regionX = client.getLocalPlayer().getWorldLocation().getRegionX();
             int regionY = client.getLocalPlayer().getWorldLocation().getRegionY();
 
-            // The area is bounded by (39,63) and (52,57) - these are opposite corners
-            // So we need: 39 <= regionX <= 52 AND 57 <= regionY <= 63
             return regionX >= 39 && regionX <= 52 && regionY >= 57 && regionY <= 63;
         }
 
@@ -110,6 +110,10 @@ public class BoneShardTrainingState {
 
     public boolean hasBlessedWines() {
         return hasItem(BLESSED_SUNFIRE_WINE_ID, BLESSED_WINE_ID);
+    }
+
+    public boolean hasRegularWines() {
+        return hasItem(WINE_ID, BLESSED_WINE_ID);
     }
 
     public boolean hasShards() {
@@ -130,13 +134,11 @@ public class BoneShardTrainingState {
         return getWineActionsInBowl() > 0;
     }
 
-    // Handle varbit changes from the plugin
     public void onVarbitChanged(int newValue) {
         cachedVarbitValue = newValue;
         wineActionsInBowl = newValue / 100; // Convert varbit value to actions (100 shards per action)
     }
 
-    // Update varbit cache when needed
     private void updateVarbitCache() {
         if (client != null) {
             int currentVarbitValue = client.getVarbitValue(9945);
@@ -206,8 +208,6 @@ public class BoneShardTrainingState {
         return Math.min(prayerActions, availableActions);
     }
 
-    // Consolidated tracker: Actions remaining until prayer restore OR inventory
-    // depletion (whichever is smaller)
     public int getActionsRemaining() {
         int inventoryActions = getRemainingInventoryActions();
         int prayerActions = getActionsUntilPrayerRestore();
@@ -215,9 +215,4 @@ public class BoneShardTrainingState {
         // Return the smaller of the two (the limiting factor)
         return Math.min(inventoryActions, prayerActions);
     }
-
-    // Wine actions tracked via VARLAMORE_PRAYER_WINEQUANT varbit (ID: 9945)
-    // All calculations are done in real-time using current inventory + varbit state
-    // No historical tracking needed - everything is calculated from current game
-    // state
 }
