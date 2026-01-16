@@ -17,28 +17,38 @@ These values can be overwritten by the user, and restored by pressing the refres
 - Accounts for multipliers on training speed, such as the use of Sunfire Wines and Zealot's robes
 - Can scan your inventory and calculate the total bone shard value of any bones you're holding (including noted and blessed versions)
 - Has a "Resource Planning" table which can tell you how many more bones you should get to reach your goal
-- Debug setting: Allows you to look up a player by name to populate the starting XP, and automatically sets a reasonable target (current level + 1). 
+- Debug setting: Allows you to look up a player by name to populate the starting XP, and automatically sets a reasonable target (current level + 1)
 
 ### Resource Mode
 - Can scan your inventory to detect the bone shard value of whatever Prayer resources you're holding
-- Calculates the XP value of your inventory and the total number of wines needed for training
+- Calculates the XP value of your inventory and the total number of wines (and optionally, sunfire splinters) needed for training
 - Displays the final Prayer level you will have earned after using all the resources in your inventory
 - Contains a "Bone Shard Sources" table showing the shard value of each different type of bone that can be used for training
 - Debug setting: Allows you to enter a custom number of bone shards and will calculate the XP value and number of wines needed to process that number of shards.
 
 ### General Features
-- Highlights the Exposed Altar, Shrine of Ralos, and Libation Bowl in Ralos' Rise. This feature can be configured in the plugin's settings.
+- Tracks the current training stage and displays relevant details to aid training. 
+- Draws a path to the Exposed Altar when carrying unblessed wines and blessed bone shards to avoid the Unblessed Wine Walk of Shame. 
+- Dynamically highlights the active training object based on the current stage of the prayer training. This feature can be configured in the plugin's settings. 
+- Displays information about the training progress of your current inventory
 
 # Planned Features
-- If the player is in Ralos' Rise with bone shards and unblessed wines in their inventory, draw a line from the player's current position to the Exposed Altar to bless the wines. 
-- Calculate number of trips to achieve goal / process the held bone shards
 - Calculate number of Prayer potions or Moonlight moths needed, for players who choose not to run to the altar to restore prayer points
 - Calculate estimated processing time for materials in the inventory (time spent breaking down bones)
+- Object highlighting for bone processing
 
 ### Under consideration
 - Add option for user to include banked material as part of calculations
 - Add support for an incomplete Zealot's robe set (i.e. 1-3 pieces, not just the full set)
 
 # Screenshots
-![bone-shard-helper-plugin](/assets/Bone%20Shard%20Plugin%20info_2.png "bone-shard-plugin-info")
+![bone-shard-helper-plugin](/assets/Bone%20Shard%20Plugin%2020260115.png "bone-shard-plugin-info")
+
+Bless Wines             |  Sacrifice Shards
+:-------------------------:|:-------------------------:
+<img width=512px src="/assets/BlessWines.png">|<img width=512px src="/assets/SacrificeShards.png">
+
+Recharge Prayer             |  Resupply
+:-------------------------:|:-------------------------:
+<img width=512px src="/assets/RechargePrayer.png">|<img width=512px src="/assets/Resupply.png">
 
