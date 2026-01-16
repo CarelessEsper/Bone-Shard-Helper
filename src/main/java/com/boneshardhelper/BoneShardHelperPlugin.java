@@ -19,6 +19,8 @@ import net.runelite.api.events.GroundObjectDespawned;
 import net.runelite.api.events.GroundObjectSpawned;
 import net.runelite.api.events.WallObjectDespawned;
 import net.runelite.api.events.WallObjectSpawned;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
@@ -30,7 +32,7 @@ import net.runelite.client.util.ImageUtil;
 
 @PluginDescriptor(name = "Bone Shard Helper", description = "A helper plugin for Prayer training using bone shards in Varlamore.", tags = {
 		"prayer", "varlamore", "calculator", "planning", "bone", "xp", "training", "wine", "shard", "blessed",
-		"skilling","teomat","ralos" })
+		"skilling", "teomat", "ralos" })
 public class BoneShardHelperPlugin extends Plugin {
 	@Inject
 	private Client client;
@@ -46,6 +48,12 @@ public class BoneShardHelperPlugin extends Plugin {
 
 	@Inject
 	private PrayerObjectOverlay prayerObjectOverlay;
+
+	@Inject
+	private BoneShardOverlay2D boneShardOverlay2D;
+
+	@Inject
+	private BoneShardTrainingState trainingState;
 
 	@Getter
 	private final Map<TileObject, PrayerObject> prayerObjects = new HashMap<>();
@@ -73,12 +81,14 @@ public class BoneShardHelperPlugin extends Plugin {
 		// Set plugin reference in overlay to avoid circular dependency
 		prayerObjectOverlay.setPlugin(this);
 		overlayManager.add(prayerObjectOverlay);
+		overlayManager.add(boneShardOverlay2D);
 	}
 
 	@Override
 	protected void shutDown() throws Exception {
 		clientToolbar.removeNavigation(uiNavigationButton);
 		overlayManager.remove(prayerObjectOverlay);
+		overlayManager.remove(boneShardOverlay2D);
 		prayerObjects.clear();
 	}
 
@@ -141,6 +151,14 @@ public class BoneShardHelperPlugin extends Plugin {
 	@Subscribe
 	public void onDecorativeObjectDespawned(DecorativeObjectDespawned event) {
 		onTileObject(event.getTile(), event.getDecorativeObject(), null);
+	}
+
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged event) {
+		// Listen for VARLAMORE_PRAYER_WINEQUANT (tracks wine in libation bowl)
+		if (event.getVarbitId() == VarbitID.VARLAMORE_PRAYER_WINEQUANT) {
+			trainingState.onVarbitChanged(event.getValue());
+		}
 	}
 
 	private void onTileObject(Tile tile, TileObject oldObject, TileObject newObject) {
