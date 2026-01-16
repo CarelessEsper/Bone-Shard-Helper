@@ -18,6 +18,8 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayUtil;
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.api.Perspective;
 
@@ -25,10 +27,12 @@ class PrayerObjectOverlay extends Overlay {
     // Overlay for highlighting relevant objects in Ralos' rise (implemented similar to agility plugin)
     private static final int MAX_DISTANCE = 2350;
     private static final int EXPOSED_ALTAR_ID = 52799;
+    private static final int LIBATION_BOWL_ID = 53018;
     private static final int RALOS_REGION_ID = 5681;
 
     private final Client client;
     private final BoneShardHelperConfig config;
+    private final ModelOutlineRenderer modelOutlineRenderer;
     private BoneShardHelperPlugin plugin;
     private BoneShardTrainingState trainingState;
 
@@ -39,12 +43,14 @@ class PrayerObjectOverlay extends Overlay {
     private BoneShardTrainingState.TrainingState lastTrainingState = null;
 
     @Inject
-    private PrayerObjectOverlay(Client client, BoneShardHelperConfig config, BoneShardTrainingState trainingState) {
+    private PrayerObjectOverlay(Client client, BoneShardHelperConfig config, BoneShardTrainingState trainingState, 
+                                ModelOutlineRenderer modelOutlineRenderer) {
         setPosition(OverlayPosition.DYNAMIC);
         setLayer(OverlayLayer.ABOVE_SCENE);
         this.client = client;
         this.config = config;
         this.trainingState = trainingState;
+        this.modelOutlineRenderer = modelOutlineRenderer;
     }
 
     void setPlugin(BoneShardHelperPlugin plugin) {
@@ -70,24 +76,32 @@ class PrayerObjectOverlay extends Overlay {
                 // Only highlight objects on the same plane and within distance
                 if (tile.getPlane() == client.getLocalPlayer().getWorldLocation().getPlane()
                         && object.getLocalLocation().distanceTo(playerLocation) < MAX_DISTANCE) {
-                    Shape objectClickbox = object.getClickbox();
-                    if (objectClickbox != null) {
-                        // Get the configured color for this prayer object type based on training state
-                        Color configColor = prayerObject.getHighlightColor(config, trainingState);
+                    Color configColor = prayerObject.getHighlightColor(config, trainingState);
 
-                        // Darker color on mouse hover to indicate interaction
-                        if (objectClickbox.contains(mousePosition.getX(), mousePosition.getY())) {
-                            graphics.setColor(configColor.darker());
-                        } else {
-                            graphics.setColor(configColor);
+                    // Render based on selected highlight style
+                    if (config.highlightStyle() == HighlightStyle.HIGHLIGHT_CLICKBOX) {
+                        // Clickbox style: draw outline and fill
+                        Shape objectClickbox = object.getClickbox();
+                        if (objectClickbox != null) {
+                            Color renderColor = configColor;
+                            if (objectClickbox.contains(mousePosition.getX(), mousePosition.getY())) {
+                                renderColor = configColor.darker();
+                            }
+
+                            graphics.setColor(renderColor);
+                            graphics.draw(objectClickbox);
+
+                            graphics.setColor(ColorUtil.colorWithAlpha(configColor, configColor.getAlpha() / 5));
+                            graphics.fill(objectClickbox);
                         }
+                    } else if (config.highlightStyle() == HighlightStyle.HIGHLIGHT_OUTLINE) {
+                        modelOutlineRenderer.drawOutline(object, 2, configColor, 4);
+                    }
 
-                        // Draw the outline
-                        graphics.draw(objectClickbox);
-
-                        // Fill with transparent color (alpha / 5 for subtle fill)
-                        graphics.setColor(ColorUtil.colorWithAlpha(configColor, configColor.getAlpha() / 5));
-                        graphics.fill(objectClickbox);
+                    // Draw text overlay for libation bowl
+                    if ((config.toggleOverlayActionsLeft() || config.toggleOverlayStageName()) 
+                            && prayerObject.getObjectId() == LIBATION_BOWL_ID) {
+                        drawLibationBowlText(graphics, object, prayerObject);
                     }
                 }
             });
@@ -249,5 +263,79 @@ class PrayerObjectOverlay extends Overlay {
         lastPlayerPosition = null;
         lastAltarPosition = null;
         lastTrainingState = null;
+    }
+
+    private void drawLibationBowlText(Graphics2D graphics, TileObject object, PrayerObject prayerObject) {
+        BoneShardTrainingState.TrainingState currentState = trainingState.getCurrentTrainingState();
+        String text = null;
+        Color textColor;
+
+        // Determine text and color based on training state
+        switch (currentState) {
+            case BLESS_WINES:
+                if (config.toggleOverlayStageName()) {
+                    text = currentState.getDisplayName();
+                    textColor = config.blessWinesColor();
+                } else {
+                    return;
+                }
+                break;
+            case RECHARGE_PRAYER:
+                if (config.toggleOverlayStageName()) {
+                    text = currentState.getDisplayName();
+                    textColor = config.rechargePrayerColor();
+                } else {
+                    return;
+                }
+                break;
+            case SACRIFICE_SHARDS:
+                if (config.toggleOverlayActionsLeft()) {
+                    int actionsRemaining = trainingState.getActionsRemaining();
+                    text = "Actions: " + actionsRemaining;
+                    textColor = config.sacrificeShardsColor();
+                } else if (config.toggleOverlayStageName()) {
+                    text = currentState.getDisplayName();
+                    textColor = config.sacrificeShardsColor();
+                } else {
+                    return;
+                }
+                break;
+            case RESUPPLY:
+                if (config.toggleOverlayStageName()) {
+                    text = currentState.getDisplayName();
+                    textColor = config.resupplyColor();
+                } else {
+                    return;
+                }
+                break;
+            default:
+                if (config.toggleOverlayStageName()) {
+                    text = currentState.getDisplayName();
+                    textColor = Color.WHITE;
+                } else {
+                    return;
+                }
+                break;
+        }
+
+        // Get the canvas text location for the object with vertical offset
+        int verticalOffset = 100;
+        Point pos = Perspective.getCanvasTextLocation(client, graphics, object.getLocalLocation(), text, verticalOffset);
+        if (pos == null) {
+            return;
+        }
+
+        // Render text with custom outline/shadow
+        if (config.textOutline()) {
+            // Draw outline in 4 directions
+            graphics.setColor(Color.BLACK);
+            graphics.drawString(text, pos.getX(), pos.getY() + 1);
+            graphics.drawString(text, pos.getX(), pos.getY() - 1);
+            graphics.drawString(text, pos.getX() + 1, pos.getY());
+            graphics.drawString(text, pos.getX() - 1, pos.getY());
+        }
+        
+        // Render main text (with shadow if outline is disabled)
+        OverlayUtil.renderTextLocation(graphics, pos, text, textColor);
     }
 }

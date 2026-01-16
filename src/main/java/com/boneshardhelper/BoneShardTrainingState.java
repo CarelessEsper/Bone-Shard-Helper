@@ -34,10 +34,10 @@ public class BoneShardTrainingState {
 
     public enum TrainingState {
         NO_STATE(-1, ""),
-        BLESS_WINES(1, "BLESS WINES"),
-        SACRIFICE_SHARDS(2, "SACRIFICE SHARDS"),
-        RECHARGE_PRAYER(3, "RECHARGE PRAYER"),
-        RESUPPLY(4, "RESUPPLY");
+        BLESS_WINES(1, "Bless wines"),
+        SACRIFICE_SHARDS(2, "Sacrifice shards"),
+        RECHARGE_PRAYER(3, "Recharge prayer"),
+        RESUPPLY(4, "Resupply");
 
         private final int id;
         private final String displayName;

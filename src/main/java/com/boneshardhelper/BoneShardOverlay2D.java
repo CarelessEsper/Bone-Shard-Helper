@@ -41,20 +41,20 @@ public class BoneShardOverlay2D extends OverlayPanel {
 
                 // Show components regardless of training state for testing
                 BoneShardTrainingState.TrainingState currentState = state.getCurrentTrainingState();
-                Color stageColor = Color.WHITE;
+                Color stageColor;
                 
                 switch (currentState) {
                         case BLESS_WINES:
-                                stageColor = Color.ORANGE;
+                                stageColor = config.blessWinesColor();
                                 break;
                         case RECHARGE_PRAYER:
-                                stageColor = Color.CYAN;
+                                stageColor = config.rechargePrayerColor();
                                 break;
                         case SACRIFICE_SHARDS:
-                                stageColor = Color.GREEN;
+                                stageColor = config.sacrificeShardsColor();
                                 break;
                         case RESUPPLY:
-                                stageColor = Color.YELLOW;
+                                stageColor = config.resupplyColor();
                                 break;
                         default:
                                 stageColor = Color.WHITE;
@@ -80,7 +80,6 @@ public class BoneShardOverlay2D extends OverlayPanel {
                                                         .right(state.getInventoriesRemaining() + "").build());
                 }
 
-                // Key tracking values for verification
                 if (config.debugMode()) {
                         panelComponent.getChildren().add(
                                         LineComponent.builder().left("Wine in bowl: ")
