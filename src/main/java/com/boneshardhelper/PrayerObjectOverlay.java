@@ -25,7 +25,6 @@ import net.runelite.api.Perspective;
 
 class PrayerObjectOverlay extends Overlay {
     // Overlay for highlighting relevant objects in Ralos' rise (implemented similar to agility plugin)
-    private static final int MAX_DISTANCE = 2350;
     private static final int EXPOSED_ALTAR_ID = 52799;
     private static final int LIBATION_BOWL_ID = 53018;
     private static final int RALOS_REGION_ID = 5681;
@@ -59,11 +58,11 @@ class PrayerObjectOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        LocalPoint playerLocation = client.getLocalPlayer().getLocalLocation();
+        WorldPoint playerWorldLocation = client.getLocalPlayer().getWorldLocation();
         Point mousePosition = client.getMouseCanvasPosition();
 
-        // Render object highlighting if enabled and plugin is set
-        if (plugin != null && config.highlightPrayerObjects()) {
+        // Render object highlighting if enabled, object highlighting is enabled, and player is in training region
+        if (plugin != null && config.highlightPrayerObjects() && trainingState.inTrainingRegion()) {
             // Render each object that should be highlighted
             plugin.getPrayerObjects().forEach((tileObject, prayerObject) -> {
                 if (prayerObject == null || !prayerObject.shouldHighlight()) {
@@ -73,9 +72,8 @@ class PrayerObjectOverlay extends Overlay {
                 Tile tile = prayerObject.getTile();
                 TileObject object = prayerObject.getTileObject();
 
-                // Only highlight objects on the same plane and within distance
-                if (tile.getPlane() == client.getLocalPlayer().getWorldLocation().getPlane()
-                        && object.getLocalLocation().distanceTo(playerLocation) < MAX_DISTANCE) {
+                // Only highlight objects on the same plane
+                if (tile.getPlane() == playerWorldLocation.getPlane()) {
                     Color configColor = prayerObject.getHighlightColor(config, trainingState);
 
                     // Render based on selected highlight style
