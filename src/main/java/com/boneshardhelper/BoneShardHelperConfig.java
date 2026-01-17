@@ -97,7 +97,7 @@ public interface BoneShardHelperConfig extends Config {
     @ConfigSection(name = "Infobox", description = "Configure training infobox", position = 3)
     String infoboxSection = "infoboxSection";
 
-    @ConfigItem(keyName = "toggleInfobox", name = "Enable infobox at Ralos' Rise", description = "Toggle for \"Bone Shard Helper\" infobox (only shows while in Ralos' Rise map region)", section = infoboxSection, position = 0)
+    @ConfigItem(keyName = "toggleInfobox", name = "Enable infobox at Ralos' Rise", description = "Toggle for \"Bone Shard Helper\" infobox (only shows while in Ralos' Rise and holding blessed shards and wine)", section = infoboxSection, position = 0)
     default boolean toggleInfobox() {
         return true;
     }
