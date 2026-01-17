@@ -82,7 +82,7 @@ public class BoneShardOverlay2D extends OverlayPanel {
 
                 if (config.debugMode()) {
                         panelComponent.getChildren().add(
-                                        LineComponent.builder().left("Wine in bowl: ")
+                                        LineComponent.builder().left("DEBUG Wine in bowl: ")
                                                         .right(state.getWineActionsInBowl() + "").build());
                 }
 
