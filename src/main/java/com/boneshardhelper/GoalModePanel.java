@@ -3,7 +3,6 @@ package com.boneshardhelper;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -80,7 +79,11 @@ class GoalModePanel extends JPanel {
 	private boolean resourcePlanningNeedsRecalculation = false;
 	private boolean hasInventoryData = false;
 
-	GoalModePanel() {
+	// Config reference for button styling
+	private BoneShardHelperConfig config;
+
+	GoalModePanel(BoneShardHelperConfig config) {
+		this.config = config;
 		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
@@ -122,7 +125,7 @@ class GoalModePanel extends JPanel {
 		// Create results panel with BorderLayout to avoid equal height distribution
 		JPanel resultsPanel = new JPanel(new BorderLayout());
 		resultsPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		resultsPanel.setBorder(new EmptyBorder(10, 5, 5, 5));
+		resultsPanel.setBorder(new EmptyBorder(5, 10, 5, 5));
 
 		// Create resources required section
 		resourcesRequiredSection = createResourcesRequiredSection();
@@ -132,7 +135,6 @@ class GoalModePanel extends JPanel {
 		warningLabel.setFont(FontManager.getRunescapeSmallFont());
 		warningLabel.setBorder(new EmptyBorder(3, 0, 0, 0)); // Small top margin for spacing
 
-		resultsPanel.add(resourcesRequiredSection, BorderLayout.NORTH);
 		resultsPanel.add(warningLabel, BorderLayout.CENTER);
 
 		// Create Resource Planning section
@@ -154,10 +156,16 @@ class GoalModePanel extends JPanel {
 		bottomPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		bottomPanel.add(resultsPanel, BorderLayout.NORTH);
 
-		// Create center panel for resource planning and debug
+		// Create center panel for resources required, resource planning and debug
 		JPanel centerPanel = new JPanel(new BorderLayout());
 		centerPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		centerPanel.add(resourcePlanningSection, BorderLayout.NORTH);
+		
+		JPanel sectionsPanel = new JPanel(new BorderLayout());
+		sectionsPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		sectionsPanel.add(resourcesRequiredSection, BorderLayout.NORTH);
+		sectionsPanel.add(resourcePlanningSection, BorderLayout.CENTER);
+		
+		centerPanel.add(sectionsPanel, BorderLayout.NORTH);
 		centerPanel.add(debugSection, BorderLayout.SOUTH);
 
 		bottomPanel.add(centerPanel, BorderLayout.CENTER);
@@ -404,7 +412,7 @@ class GoalModePanel extends JPanel {
 				}
 
 				sunfireSplinterLabel.setText(splintersText);
-				sunfireSplinterLabel.setVisible(true);
+				sunfireSplinterLabel.setVisible(config.showSunfireSplinters());
 			} else {
 				sunfireSplinterLabel.setVisible(false);
 			}
@@ -557,12 +565,29 @@ class GoalModePanel extends JPanel {
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		content.setBorder(new EmptyBorder(5, 10, 5, 5)); // Indent content
 
-		// Create scan button (will be moved below table)
+		// Create scan button
+		Color backgroundColor = ColorScheme.DARKER_GRAY_COLOR;
+		Color textColor = Color.WHITE;
+		
 		scanInventoryButton = new JButton("Scan Inventory");
-		scanInventoryButton.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		scanInventoryButton.setForeground(Color.WHITE);
-		scanInventoryButton.setFont(FontManager.getRunescapeSmallFont());
-		scanInventoryButton.setBorder(new EmptyBorder(5, 10, 5, 10));
+		scanInventoryButton.setBackground(backgroundColor);
+		scanInventoryButton.setForeground(textColor);
+		scanInventoryButton.setFont(FontManager.getRunescapeFont());
+		scanInventoryButton.setBorder(new EmptyBorder(10, 20, 10, 20));
+
+		// Add hover effect for better UX
+		Color hoverColor = ColorScheme.DARK_GRAY_HOVER_COLOR;
+		scanInventoryButton.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseEntered(java.awt.event.MouseEvent e) {
+				scanInventoryButton.setBackground(hoverColor);
+			}
+
+			@Override
+			public void mouseExited(java.awt.event.MouseEvent e) {
+				scanInventoryButton.setBackground(backgroundColor);
+			}
+		});
 
 		// Add descriptive text above the table
 		JLabel descriptionLabel = new JLabel(
@@ -603,10 +628,10 @@ class GoalModePanel extends JPanel {
 		scrollPane.setBorder(BorderFactory.createLineBorder(ColorScheme.LIGHT_GRAY_COLOR));
 		scrollPane.setPreferredSize(new Dimension(0, 150));
 
-		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		JPanel buttonPanel = new JPanel(new BorderLayout());
 		buttonPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		buttonPanel.setBorder(new EmptyBorder(10, 0, 10, 0)); // Top and bottom spacing
-		buttonPanel.add(scanInventoryButton);
+		buttonPanel.setBorder(new EmptyBorder(10, 10, 10, 10)); // Top, left, bottom, right spacing
+		buttonPanel.add(scanInventoryButton, BorderLayout.CENTER);
 
 		JPanel bottomPanel = new JPanel(new BorderLayout());
 		bottomPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -987,7 +1012,7 @@ class GoalModePanel extends JPanel {
 				"<html>Lookup a player's name to populate the Current Level/XP and Target Level/XP boxes with that player's Prayer level and a sensible default goal.</html>");
 		descriptionLabel.setForeground(Color.LIGHT_GRAY);
 		descriptionLabel.setFont(FontManager.getRunescapeSmallFont());
-		descriptionLabel.setBorder(new javax.swing.border.EmptyBorder(0, 5, 8, 5)); // Add some spacing below the text
+		descriptionLabel.setBorder(new javax.swing.border.EmptyBorder(5, 5, 8, 5));
 
 		// Create content panel
 		JPanel contentPanel = new JPanel(new BorderLayout());
@@ -1113,6 +1138,59 @@ class GoalModePanel extends JPanel {
 			debugSection.setVisible(debugMode);
 			revalidate();
 			repaint();
+		}
+	}
+
+	public void updateScanButtonStyling() {
+		// Update button styling based on config
+		boolean highContrast = config.highContrastScanButton();
+		
+		Color backgroundColor, textColor;
+		if (highContrast) {
+			backgroundColor = new Color(0xDC8A00);
+			textColor = Color.BLACK;
+		} else {
+			backgroundColor = ColorScheme.DARKER_GRAY_COLOR;
+			textColor = Color.WHITE;
+		}
+		
+		scanInventoryButton.setBackground(backgroundColor);
+		scanInventoryButton.setForeground(textColor);
+		scanInventoryButton.setFont(FontManager.getRunescapeFont());
+		
+		for (java.awt.event.MouseListener listener : scanInventoryButton.getMouseListeners()) {
+			if (listener instanceof java.awt.event.MouseAdapter) {
+				scanInventoryButton.removeMouseListener(listener);
+			}
+		}
+		
+		Color hoverColor = highContrast ? new Color(0xE69A10) : ColorScheme.DARK_GRAY_HOVER_COLOR;
+		scanInventoryButton.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseEntered(java.awt.event.MouseEvent e) {
+				scanInventoryButton.setBackground(hoverColor);
+			}
+
+			@Override
+			public void mouseExited(java.awt.event.MouseEvent e) {
+				scanInventoryButton.setBackground(backgroundColor);
+			}
+		});
+	}
+
+	public void updateSunfireSplinterVisibility() {
+		// Update sunfire splinter visibility based on config and sunfire wine selection
+		boolean showSplinters = config.showSunfireSplinters();
+		boolean useSunfireWine = isSunfireWineSelected();
+		
+		if (useSunfireWine && showSplinters) {
+			// Only show if both sunfire wine is selected AND config allows it
+			// Check if we have actual results (not the default text)
+			if (!sunfireSplinterLabel.getText().equals("Calculate to see results")) {
+				sunfireSplinterLabel.setVisible(true);
+			}
+		} else {
+			sunfireSplinterLabel.setVisible(false);
 		}
 	}
 

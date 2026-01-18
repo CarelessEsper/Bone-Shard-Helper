@@ -73,7 +73,7 @@ class BoneShardHelperPanel extends PluginPanel {
 		this.config = config;
 
 		// Initialize tab panels (each with their own UI components)
-		goalModePanel = new GoalModePanel();
+		goalModePanel = new GoalModePanel(config);
 		resourceModePanel = new ResourceModePanel(config);
 
 		// Set up synchronized event handling for checkboxes and scan buttons
@@ -86,6 +86,12 @@ class BoneShardHelperPanel extends PluginPanel {
 
 		// Set up debug mode in Goal Mode panel
 		goalModePanel.setDebugMode(config.debugMode(), this);
+
+		// Initialize scan button styling based on config
+		updateScanButtonStyling();
+
+		// Initialize sunfire splinter visibility based on config
+		updateSunfireSplinterVisibility();
 
 		// Set dependencies for Resource Mode panel
 		resourceModePanel.setParentPanel(this);
@@ -837,6 +843,9 @@ class BoneShardHelperPanel extends PluginPanel {
 			handleCalculationError("Error updating Resource Mode calculations on wine type change", e);
 		}
 
+		// Update sunfire splinter visibility based on new wine type selection
+		updateSunfireSplinterVisibility();
+
 		// Trigger resource planning recalculation (will recalculate immediately if expanded, or flag for update if collapsed)
 		triggerResourcePlanningRecalculation();
 	}
@@ -876,6 +885,26 @@ class BoneShardHelperPanel extends PluginPanel {
 		// Update debug mode in Goal Mode panel
 		if (goalModePanel != null) {
 			goalModePanel.setDebugMode(debugMode, this);
+		}
+	}
+
+	public void updateScanButtonStyling() {
+		// Update scan button styling in both panels
+		if (goalModePanel != null) {
+			goalModePanel.updateScanButtonStyling();
+		}
+		if (resourceModePanel != null) {
+			resourceModePanel.updateScanButtonStyling();
+		}
+	}
+
+	public void updateSunfireSplinterVisibility() {
+		// Update sunfire splinter visibility in both panels
+		if (goalModePanel != null) {
+			goalModePanel.updateSunfireSplinterVisibility();
+		}
+		if (resourceModePanel != null) {
+			resourceModePanel.updateSunfireSplinterVisibility();
 		}
 	}
 

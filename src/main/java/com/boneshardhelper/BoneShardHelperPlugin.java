@@ -98,6 +98,10 @@ public class BoneShardHelperPlugin extends Plugin {
 			if ("debugMode".equals(event.getKey())) {
 				boolean debugMode = Boolean.parseBoolean(event.getNewValue());
 				uiPanel.get().updateDebugMode(debugMode);
+			} else if ("highContrastScanButton".equals(event.getKey())) {
+				uiPanel.get().updateScanButtonStyling();
+			} else if ("showSunfireSplinters".equals(event.getKey())) {
+				uiPanel.get().updateSunfireSplinterVisibility();
 			}
 		}
 	}

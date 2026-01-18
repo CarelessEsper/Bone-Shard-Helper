@@ -93,7 +93,7 @@ class ResourceModePanel extends JPanel {
 		uiCheckboxSunfireWine.setToolTipText("+20% prayer XP per blessed bone shard");
 		uiCheckboxZealotRobes.setToolTipText("5% chance to save bone resources");
 
-		uiButtonScanResources = createStyledScanButton("Scan Inventory");
+		uiButtonScanResources = createStyledScanButton("Scan Inventory", config.highContrastScanButton());
 
 		debugStatusLabel = new JLabel("Status: Ready to scan");
 		debugStatusLabel.setForeground(Color.YELLOW);
@@ -154,11 +154,11 @@ class ResourceModePanel extends JPanel {
 		// Since we only have the inventory resources section now, use it directly
 		JPanel tablesPanel = inventoryResourcesSection;
 
-		// Create scan button panel (centered, with spacing)
-		JPanel scanButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		// Create scan button panel (full width, with spacing)
+		JPanel scanButtonPanel = new JPanel(new BorderLayout());
 		scanButtonPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		scanButtonPanel.setBorder(new EmptyBorder(10, 0, 5, 0)); // Top and bottom spacing
-		scanButtonPanel.add(uiButtonScanResources);
+		scanButtonPanel.setBorder(new EmptyBorder(10, 10, 5, 10)); // Top, left, bottom, right spacing
+		scanButtonPanel.add(uiButtonScanResources, BorderLayout.CENTER);
 
 		// Create status panel (centered, below button)
 		JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -391,24 +391,36 @@ class ResourceModePanel extends JPanel {
 		return checkbox;
 	}
 
-	private static JButton createStyledScanButton(String buttonText) {
+	private static JButton createStyledScanButton(String buttonText, boolean highContrast) {
 		JButton button = new JButton(buttonText);
-		button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		button.setForeground(Color.WHITE);
-		button.setFont(FontManager.getRunescapeSmallFont());
-		button.setBorder(new EmptyBorder(5, 10, 5, 10));
+		
+		Color backgroundColor, hoverColor, textColor;
+		if (highContrast) {
+			backgroundColor = new Color(0xDC8A00);
+			hoverColor = new Color(0xE69A10);
+			textColor = Color.BLACK;
+		} else {
+			backgroundColor = ColorScheme.DARKER_GRAY_COLOR;
+			hoverColor = ColorScheme.DARK_GRAY_HOVER_COLOR;
+			textColor = Color.WHITE;
+		}
+		
+		button.setBackground(backgroundColor);
+		button.setForeground(textColor);
+		button.setFont(FontManager.getRunescapeFont());
+		button.setBorder(new EmptyBorder(10, 20, 10, 20));
 		button.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
 		// Add hover effect for better UX
 		button.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseEntered(java.awt.event.MouseEvent e) {
-				button.setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+				button.setBackground(hoverColor);
 			}
 
 			@Override
 			public void mouseExited(java.awt.event.MouseEvent e) {
-				button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+				button.setBackground(backgroundColor);
 			}
 		});
 
@@ -783,7 +795,7 @@ class ResourceModePanel extends JPanel {
 
 				String splintersText = String.format("%,d sunfire splinters for wines", splintersNeeded);
 				sunfireSplinterLabel.setText(splintersText);
-				sunfireSplinterLabel.setVisible(true);
+				sunfireSplinterLabel.setVisible(config.showSunfireSplinters());
 			} else {
 				sunfireSplinterLabel.setVisible(false);
 			}
@@ -1424,6 +1436,59 @@ class ResourceModePanel extends JPanel {
 			} catch (Exception e) {
 				log.error("Error scaling icon", e);
 			}
+		}
+	}
+
+	public void updateScanButtonStyling() {
+		// Update button styling based on config
+		boolean highContrast = config.highContrastScanButton();
+		
+		Color backgroundColor, textColor;
+		if (highContrast) {
+			backgroundColor = new Color(0xDC8A00);
+			textColor = Color.BLACK;
+		} else {
+			backgroundColor = ColorScheme.DARKER_GRAY_COLOR;
+			textColor = Color.WHITE;
+		}
+		
+		uiButtonScanResources.setBackground(backgroundColor);
+		uiButtonScanResources.setForeground(textColor);
+		uiButtonScanResources.setFont(FontManager.getRunescapeFont());
+		
+		for (java.awt.event.MouseListener listener : uiButtonScanResources.getMouseListeners()) {
+			if (listener instanceof java.awt.event.MouseAdapter) {
+				uiButtonScanResources.removeMouseListener(listener);
+			}
+		}
+		
+		Color hoverColor = highContrast ? new Color(0xE69A10) : ColorScheme.DARK_GRAY_HOVER_COLOR;
+		uiButtonScanResources.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseEntered(java.awt.event.MouseEvent e) {
+				uiButtonScanResources.setBackground(hoverColor);
+			}
+
+			@Override
+			public void mouseExited(java.awt.event.MouseEvent e) {
+				uiButtonScanResources.setBackground(backgroundColor);
+			}
+		});
+	}
+
+	public void updateSunfireSplinterVisibility() {
+		// Update sunfire splinter visibility based on config and sunfire wine selection
+		boolean showSplinters = config.showSunfireSplinters();
+		boolean useSunfireWine = isSunfireWineSelected();
+		
+		if (useSunfireWine && showSplinters) {
+			// Only show if both sunfire wine is selected AND config allows it
+			// Check if we have actual results (not the default text)
+			if (!sunfireSplinterLabel.getText().equals("Scan inventory to see results")) {
+				sunfireSplinterLabel.setVisible(true);
+			}
+		} else {
+			sunfireSplinterLabel.setVisible(false);
 		}
 	}
 

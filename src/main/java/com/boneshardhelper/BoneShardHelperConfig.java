@@ -9,7 +9,22 @@ import net.runelite.client.config.ConfigSection;
 
 @ConfigGroup("boneshardhelper")
 public interface BoneShardHelperConfig extends Config {
-    @ConfigSection(name = "Overlay", description = "Configure prayer object overlay", position = 0)
+    // Side panel Settings
+    @ConfigSection(name = "Plugin Side-Panel", description = "Configure settings for the plugin's calculator in the side panel (Goal Mode & Resource Mode)", position = 0)
+
+    String calculationPanelSection = "calculationPanelSection";
+
+    @ConfigItem(keyName = "showSunfireSplinters", name = "Display sunfire splinters needed", description = "Include the number of sunfire splinters needed when sunfire wines are being used", section = calculationPanelSection, position = 0)
+    default boolean showSunfireSplinters() {
+        return true;
+    }
+
+    @ConfigItem(keyName = "highContrastScanButton", name = "Use high-contrast scan button", description = "Use an orange background for the side panel's \"Scan Inventory\" button for better visibility", section = calculationPanelSection, position = 1)
+    default boolean highContrastScanButton() {
+        return false;
+    }
+
+    @ConfigSection(name = "Overlay", description = "Configure prayer object overlay", position = 1)
     String overlaySection = "overlaySection";
 
     // Object Highlighting Settings
@@ -47,7 +62,7 @@ public interface BoneShardHelperConfig extends Config {
     }
 
     // Text overlay
-    @ConfigSection(name = "Libation Bowl Text", description = "Display information about the training progress as an overlay on the Libation Bowl", position = 1)
+    @ConfigSection(name = "Libation Bowl Text", description = "Display information about the training progress as an overlay on the Libation Bowl", position = 2)
     String infoOverlaySection = "infoOverlaySection";
 
     @ConfigItem(keyName = "overlayActionsLeft", name = "Actions Left Overlay", description = "Display the number of actions left until the next stage near the Libation Bowl at Ralos' Rise", section = infoOverlaySection, position = 0)
@@ -66,7 +81,7 @@ public interface BoneShardHelperConfig extends Config {
     }
 
     // Training Stage Colors
-    @ConfigSection(name = "Training Stage Colors", description = "Configure colors for each training stage", position = 2)
+    @ConfigSection(name = "Training Stage Colors", description = "Configure colors for each training stage", position = 3)
     String stageColorsSection = "stageColorsSection";
 
     @Alpha
@@ -94,7 +109,7 @@ public interface BoneShardHelperConfig extends Config {
     }
 
     // Infobox Settings
-    @ConfigSection(name = "Infobox", description = "Configure training infobox", position = 3)
+    @ConfigSection(name = "Training Infobox", description = "Configure the 2D infobox overlay", position = 4)
     String infoboxSection = "infoboxSection";
 
     @ConfigItem(keyName = "toggleInfobox", name = "Enable infobox at Ralos' Rise", description = "Toggle for \"Bone Shard Helper\" infobox (only shows while in Ralos' Rise and holding blessed shards and wine)", section = infoboxSection, position = 0)
@@ -128,7 +143,7 @@ public interface BoneShardHelperConfig extends Config {
     }
 
     // Debug Settings
-    @ConfigSection(name = "Debug Settings", description = "Configure debug and development options", position = 4)
+    @ConfigSection(name = "Debug Settings", description = "Configure debug and development options", position = 5)
     String debugSection = "debugSection";
 
     @ConfigItem(keyName = "debugMode", name = "Debug Mode", description = "Enable debug mode to show additional debugging information and tables", section = debugSection, position = 0)
